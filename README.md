@@ -8,6 +8,8 @@ This version of `ifc2` is limited to sending commands which request aircraft/fli
 
 ## Installing `ifc2`
 
+> The moduleis not yet published in npmjs.com -- so this is coming soon
+
 `ifc2` is available as a Node module on [npmjs.com](https://www.npmjs.com/) and can simply be installed with:
 
 ```
@@ -28,6 +30,12 @@ To use `ifc2` you need to include it in your scripts:
 
 ```
 let IFC2 = require("ifc2");
+```
+
+Or, if you aren't installing with `npm` then you can simply clone this repository and directly reference `index.js`:
+
+```
+let IFC2 = require("/path/to/index.js);
 ```
 
 ### Initialization
