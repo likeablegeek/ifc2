@@ -6,6 +6,14 @@ A Javascript client for Infinite Flight simulator API version 2
 
 This version of `ifc2` is limited to sending commands which request aircraft/flight data points. It cannot be used to send commands which change settings/control the aircraft. That ability will be coming in a future update.
 
+## Installing `ifc2`
+
+`ifc2` is available as a Node module on [npmjs.com](https://www.npmjs.com/) and can simply be installed with:
+
+```
+npm install ifc2
+```
+
 ## Using the API
 
 ### Connecting to the Infinite Flight Connect v2 API
@@ -14,7 +22,17 @@ This version of `ifc2` is limited to sending commands which request aircraft/fli
 
 > An older Connect v1 API still exists and is available in Infinite Flight -- however it is less efficient for many use cases that need to retrieve and/or set states in Infinite Flight at high speed. The [`ifc` JavaScript client](https://github.com/likeablegeek/ifc) offers an interface to the Connect v1 API.
 
+### Including `ifc2` in your scripts/applications
+
+To use `ifc2` you need to include it in your scripts:
+
+```
+let IFC2 = require("ifc2");
+```
+
 ### Initialization
+
+To initialise `ifc2` and connect to an Infinite Flight device you use the `init` function. The `init` function takes the following arguments:
 
 `init(successCallback, {params})`
 
@@ -33,9 +51,6 @@ IFC2.init(
     console.log("IFC connected");
     IFC2.get("aircraft/0/pitch");
   },
-  function() {
-    IFC.log("IFC connection error");
-  },
   {
     "enableLog": true,
     "loggingLevel": 1,
@@ -44,6 +59,8 @@ IFC2.init(
   }
 )
 ```
+
+If you do not include a host and port, `ifc2` will search your local network for an active Infinite Flight device and connect to the first device to respond.
 
 ## Using the Infinite Flight Connect API through `ifc2`
 
