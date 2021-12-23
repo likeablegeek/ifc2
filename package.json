@@ -1,0 +1,29 @@
+{
+  "name": "ifc2",
+  "version": "1.0.0",
+  "description": "A Javascript client for Infinite Flight simulator API version 2",
+  "main": "ifc2.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/likeablegeek/ifc2"
+  },
+  "keywords": [
+    "api",
+    "infinite flight",
+    "flight",
+    "simulator",
+    "client"
+  ],
+  "dependencies": {
+    "dgram": "^1.0.1",
+    "events": "^3.3.0",
+    "is-ip": "^3.1.0",
+    "net": "^1.0.2"
+  },
+  "author": "Arman Danesh",
+  "license": "Apache 2",
+  "bugs": {
+    "url": "https://github.com/likeablegeek/ifc2/issues"
+  },
+  "homepage": "https://github.com/likeablegeek/ifc2"
+}
