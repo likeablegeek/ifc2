@@ -32,10 +32,10 @@ To use `ifc2` you need to include it in your scripts:
 let IFC2 = require("ifc2");
 ```
 
-Or, if you aren't installing with `npm` then you can simply clone this repository and directly reference `index.js`:
+Or, if you aren't installing with `npm` then you can simply clone this repository and directly reference `ifc2.js`:
 
 ```
-let IFC2 = require("/path/to/index.js);
+let IFC2 = require("/path/to/ifc2.js);
 ```
 
 ### Initialization
