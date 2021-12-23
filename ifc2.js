@@ -170,13 +170,13 @@ let IFC2 = {
   /*****
    * Sends command formatted to send on TCP socket to API for setState commands
    */
-   setCommand: (cmd, val) => { // Prepare command ready to send to IF
+  setCommand: (cmd, val) => { // Prepare command ready to send to IF
 
     IFC2.log('setCommand: ' + cmd + "," + val);
 
     let cmdType = IFC2.infiniteFlight.manifestByCommand[cmd].type;
 
-    if (cmdType < 4) { // Ignore string data types for now
+    if (cmdType < 4) { // Ignore string data types for now -- coming soon
 
       let dataLength = 1;
 
@@ -250,7 +250,6 @@ let IFC2 = {
 
           IFC2.log('Sending command: ' + cmdObj.cmdCode);
 
-//          IFC2.infiniteFlight.clientSocket.write(IFC2.getCommand(cmdCode), () => { // Send the command
           IFC2.infiniteFlight.clientSocket.write(cmdObj.cmdBuf, () => { // Send the command
             IFC2.waitList.push(cmdObj.cmdCode); // Add the command to the wait list
             IFC2.log("Command sent: " + cmdObj.cmdCode);
@@ -311,7 +310,7 @@ let IFC2 = {
   /*****
    * Function for client to request a one-off get command
    */
-   set: (cmd,val) => {
+  set: (cmd,val) => {
 
     IFC2.log("Processing set request: " + cmd + "," + val);
 
@@ -324,7 +323,7 @@ let IFC2 = {
   /*****
    * Function run an Infinite Flight command
    */
-   run: (cmd) => {
+  run: (cmd) => {
 
     IFC2.log("Processing run request: " + cmd);
 
@@ -340,8 +339,6 @@ let IFC2 = {
   processManifest: () => {
 
     IFC2.log('Processing manifest into objects');
-
-//    IFC2.log('Manifest data: ' + IFC2.infiniteFlight.manifestData);
 
     let manifestLines = IFC2.infiniteFlight.manifestData.split("\n"); // Split the data into lines
 
@@ -386,7 +383,7 @@ let IFC2 = {
   /*****
    * Return the manifest by command
    */
-   manifestByCommand: () => {
+  manifestByCommand: () => {
     return IFC2.infiniteFlight.manifestByCommand;
   },
 
@@ -410,8 +407,6 @@ let IFC2 = {
     IFC2.infiniteFlight.manifestSocket.on('data', (data) => { // Handle "data" event
 
       IFC2.log("Receiving Manifest Data");
-
-//      IFC2.log(data);
 
       if (IFC2.infiniteFlight.manifestBuffer == null) { // We haven't stored any buffer data yet
 
@@ -667,6 +662,9 @@ let IFC2 = {
 
   },
 
+  /*****
+   * After processing the manifest, connect to IF Connect v2 API
+   */
   postManifest: function() {
 
     IFC2.infiniteFlight.clientSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {});
@@ -677,10 +675,6 @@ let IFC2 = {
 
       IFC2.processData(data, IFC2.processQueue);
 
-/*      if (IFC2.q.length > 0) {
-        IFC2.processQueue();
-      }*/
-    
     });
 
     IFC2.infiniteFlight.clientSocket.on('error', function(data) {
@@ -720,15 +714,22 @@ let IFC2 = {
 
   },
 
+  /*****
+   * Pre-connection tasts
+   */
   preConnect: function() {
     IFC2.log("Connecting...", IFC2.INFO);
     IFC2.getManifest();
-  }, // What to do before connecting to socket
+  },
 
-  postConnect: function() { // What to do when connected
+  /*****
+   * Post-connection tasks
+   */
+  postConnect: function() {
     
     IFC2.log("clientSocket Connected ...", IFC2.MANDATORY);
 
+    // Connect to Polling Socket
     IFC2.infiniteFlight.pollSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {});
 
     IFC2.infiniteFlight.pollSocket.on('data', function(data) {
@@ -736,8 +737,6 @@ let IFC2 = {
       IFC2.log('Received poll: ' + data, IFC2.INFO);
 
       IFC2.processData(data, IFC2.processPoll);
-
-//      IFC2.processPoll();
 
     });
 
@@ -780,31 +779,46 @@ let IFC2 = {
 
   },
 
+  /*****
+   * Process results of data returned from IF
+   */
   processResult: function(command, data) {
+
     IFC2.log("Processing result: " + command + " > " + data);
+
+    // Save data in ifData data object
     IFC2.ifData[IFC2.infiniteFlight.manifestByCommand[command].name] = {
       data: data,
       ts: Date.now()
     };
+
+    // Return IFC2data event
     IFC2.eventEmitter.emit('IFC2data',{"command": IFC2.infiniteFlight.manifestByCommand[command].name, "data": data}); // Return data to calling script through an event
+
   },
 
   // SHORTCUTS FUNCTIONS //
-  init: function(successCallback, params = {}) { // Initialise module
+
+  /*****
+   * Initialise module and connection to IF
+   */
+  init: function(successCallback, params = {}) {
     IFC2.log("Initialisting IFC2");
     if (successCallback) IFC2.successCallback = successCallback; // Set success callback function
     if (params.enableLog) IFC2.enableLog = params.enableLog; // Set Logging on/off
     if (params.logLevel) IFC2.logLevel = params.logLevel; // Set logging message level
-//    if (params.poll) IFC2.isPolling = poll; // Enable polling if selected
     if (params.host && params.port) { // Host provided so connect directly to it
       IFC2.infiniteFlight.serverAddress = params.host;
       IFC2.infiniteFlight.serverPort = params.port;
-      IFC2.initIFClient();
+      IFC2.preConnect();
     } else { // No host provided so search for a host via UDP
       IFC2.searchHost(); // Search for Infinite Flight host
     }
   },
 
+  /*****
+   * Use UDP broadcast to find an IF client on the local network
+   */
   searchHost: function() {
 
     // We only connect to the first device to respond.
@@ -835,7 +849,7 @@ let IFC2 = {
       }
       server.close();
 
-      IFC2.initIFClient();
+      IFC2.preConnect();
 
     });
 
@@ -845,15 +859,6 @@ let IFC2 = {
         var address = server.address(); 
         IFC2.log('UDP Server started and listening on ' + address.address + ":" + address.port,IFC2.INFO);
     });
-
-  },
-
-  initIFClient: function() { // Initiaise the module
-
-/*    if (IFC2.infiniteFlight.clientSocket) IFC2.infiniteFlight.clientSocket.close();
-    if (IFC2.infiniteFlight.pollSocket) IFC2.infiniteFlight.pollSocket.close();*/
-
-    IFC2.preConnect();
 
   },
 

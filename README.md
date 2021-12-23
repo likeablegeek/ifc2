@@ -287,7 +287,7 @@ The module emits the following events:
 * `IFC2manifest`: Emitted after the manifest is retrieved; the event returns the manifest to the listener as a JSON object.
 * `IFC2msg`: Emmitted when the `ifc2` module needs to send a log message to the calling script; the event returns a JSON object containing the message and the log level of the message to the listener.
 
-The following is an example of binding an event to the `IFCData` events in a calling scripts:
+The following is an example of binding an event to the `IFC2Data` events in a calling scripts:
 
 ```
 var IFC2 = require("ifc2");
