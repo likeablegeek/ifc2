@@ -119,8 +119,7 @@ let IFC2 = {
   /*****
    * Object to hold last value fetched for all states that have been fetched from API
    */
-  ifData: {
-  },
+  ifData: {},
 
   /*****
    * Logging function
@@ -861,6 +860,73 @@ let IFC2 = {
     });
 
   },
+
+  /*****
+   * Close active connections
+   */
+  close: function(callback) {
+
+    // Only close if connected
+    if (IFC2.isConnected) {
+
+      // Reset isConnected flag
+      IFC2.isConnected = false;
+
+      // Reset the sucess callback function
+      IFC2.successCallback = () => {};
+
+      // Destroy client socket
+      IFC2.infiniteFlight.clientSocket.destroy();
+      IFC2.infiniteFlight.clientSocket.emit('error', new Error('ECONNRESET'));
+
+      // Delete client socket
+      delete IFC2.infiniteFlight.clientSocket;
+
+      // Recreate client socket
+      IFC2.infiniteFlight.clientSocket = new net.Socket();
+
+      // Destory poll socket
+      IFC2.infiniteFlight.pollSocket.destroy();
+      IFC2.infiniteFlight.pollSocket.emit('error', new Error('ECONNRESET'));
+
+      // Delete poll socket
+      delete IFC2.infiniteFlight.pollSocket;
+
+      // Recreate poll socket
+      IFC2.infiniteFlight.pollSocket = new net.Socket();
+
+      // Delete manifest socket
+      delete IFC2.infiniteFlight.manifestSocket;
+
+      // Recreate manifest socket
+      IFC2.infiniteFlight.manifestSocket = new net.Socket();
+
+      // Reset manfiest data
+      IFC2.infiniteFlight.manifestData = ""; // String to hold raw manifest data
+      IFC2.infiniteFlight.manifestByName = {}, // Object to hold the manifest organised by command name
+      IFC2.infiniteFlight.manifestByCommand = {}; // Object to hold the manifest organised by command number
+      IFC2.infiniteFlight.manifestLength = 0; // Manifest length -- zero is initial placeholder
+      IFC2.infiniteFlight.manifestBuffer = null; // Placeholder variable for future manifest buffer
+
+      // Reset isWaiting flag
+      IFC2.isWaiting = false;
+
+      // Reset queues
+      IFC2.q = [];
+      IFC2.pollQ =[];
+
+      // Reset wait list
+      IFC2.waitList = [];
+
+      // Reset ifData data object
+      IFC2.ifData = {};
+
+    }
+
+    // Execute callback function
+    callback();
+
+  }
 
 };
 
