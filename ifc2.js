@@ -2,7 +2,7 @@
 
 ifc2: A Node JS module providing a client the Infinite Flight Connect version 2 API.
 
-Version: 0.9.0
+Version: 1.0.0
 Author: @likeablegeek
 
 Copyright 2021.
@@ -127,7 +127,7 @@ let IFC2 = {
   log: (msg,level = IFC2.logLevel) => { // generic logging function
     if (IFC2.enableLog) {
       if (level <= IFC2.logLevel) {
-        var info = "(";
+        let info = "(";
         info += (IFC2.isConnected) ? 'c' : '';
         info += (IFC2.isWaiting) ? 'w' : '';
 //        info += (IFC2.isPolling) ? 'p' : '';
@@ -154,11 +154,11 @@ let IFC2 = {
 
     IFC2.log('getCommand: ' + cmd);
 
-    var abCommand = new ArrayBuffer(5);
-    var dvCommand = new DataView(abCommand);
+    let abCommand = new ArrayBuffer(5);
+    let dvCommand = new DataView(abCommand);
     dvCommand.setInt32(0, cmd, IFC2.LE); // Encode the command itself
     dvCommand.setInt8(4, IFC2.GETCMD, IFC2.LE); // Encode get marker
-    var u8Command = new Uint8Array(abCommand);
+    let u8Command = new Uint8Array(abCommand);
   
     IFC2.log("getCommand: " + u8Command);
     
@@ -192,8 +192,8 @@ let IFC2 = {
       }
     
 
-      var abCommand = new ArrayBuffer(5 + dataLength); // 5 is command + true/false divider + value to be sent
-      var dvCommand = new DataView(abCommand);
+      let abCommand = new ArrayBuffer(5 + dataLength); // 5 is command + true/false divider + value to be sent
+      let dvCommand = new DataView(abCommand);
       dvCommand.setInt32(0, cmd, IFC2.LE); // Encode the command itself
       dvCommand.setInt8(4, IFC2.SETCMD, IFC2.LE); // Encode set marker
 
@@ -212,7 +212,7 @@ let IFC2 = {
           break;
       }
 
-      var u8Command = new Uint8Array(abCommand);
+      let u8Command = new Uint8Array(abCommand);
   
       IFC2.log("getCommand: " + u8Command);
     
@@ -241,7 +241,7 @@ let IFC2 = {
 
       if (IFC2.q.length > 0) { // only send if there is a command in the queue
 
-        var cmdObj = IFC2.q.shift(); // grab the next command from the queue
+        let cmdObj = IFC2.q.shift(); // grab the next command from the queue
 
         if (IFC2.infiniteFlight.manifestByName[cmdObj.cmd]) { // only send if the command is in the manifest
 
@@ -273,7 +273,7 @@ let IFC2 = {
 
     IFC2.log("Enqueueing: " + cmd + "," + action);
 
-    var cmdCode = IFC2.infiniteFlight.manifestByName[cmd].command; // Get the command code
+    let cmdCode = IFC2.infiniteFlight.manifestByName[cmd].command; // Get the command code
 
     let cmdBuf = (action == IFC2.GETCMD || action == IFC2.RUNCMD) ? IFC2.getCommand(cmdCode) : IFC2.setCommand(cmdCode,val);
 
@@ -347,9 +347,9 @@ let IFC2 = {
 
       let lineData = line.split(','); // Split the line at commas
 
-      var command = parseInt(lineData[0]); // Get the command
-      var type = parseInt(lineData[1]); // Get the command data type
-      var name = lineData[2]; // Get the command name
+      let command = parseInt(lineData[0]); // Get the command
+      let type = parseInt(lineData[1]); // Get the command data type
+      let name = lineData[2]; // Get the command name
 
       if (!isNaN(command)) { // Save the manifest data for this command
         IFC2.infiniteFlight.manifestByCommand[command] = {
@@ -518,10 +518,10 @@ let IFC2 = {
 
       IFC2.log(IFC2.pollQ);
 
-      var cmd = IFC2.pollQ.shift() // Grab the next item in the queue
+      let cmd = IFC2.pollQ.shift() // Grab the next item in the queue
       IFC2.pollQ.push(cmd); // And push it back to the end of the queue for future use
 
-      var cmdCode = IFC2.infiniteFlight.manifestByName[cmd].command; // Get the command code
+      let cmdCode = IFC2.infiniteFlight.manifestByName[cmd].command; // Get the command code
 
       // We aren't waiting so process it
 
@@ -570,16 +570,16 @@ let IFC2 = {
 
     IFC2.log('processData: Processing data: ' + data, IFC2.INFO);
 
-    var command = data.readInt32LE(0); // Get the command frm the data
+    let command = data.readInt32LE(0); // Get the command frm the data
 
     IFC2.log("processData: Got data for command: " + command);
-    var inManifest = IFC2.infiniteFlight.manifestByCommand.hasOwnProperty(command); // See if command is in manifest
+    let inManifest = IFC2.infiniteFlight.manifestByCommand.hasOwnProperty(command); // See if command is in manifest
 
     IFC2.log("processData: inManifest: " + inManifest);
 
     if (inManifest) { // Only proceed if we have the command in the manifest
 
-      var waitIndex = IFC2.waitList.indexOf(command); // See if the command is in the waitList
+      let waitIndex = IFC2.waitList.indexOf(command); // See if the command is in the waitList
 
       IFC2.log("processData: waitList: " + JSON.stringify(IFC2.waitList));
       IFC2.log("processData: In waitList: " + waitIndex);
@@ -594,7 +594,7 @@ let IFC2 = {
 
           IFC2.log("processData: data length gt 4");
 
-          var length = data.readUInt32LE(4); // We do, so read the length of the response data
+          let length = data.readUInt32LE(4); // We do, so read the length of the response data
 
           IFC2.log("processData: Response length: " + length);
 
@@ -837,10 +837,10 @@ let IFC2 = {
     server.on("message", function (message) {
       IFC2.log("UDP broadcast received",IFC2.INFO);
       IFC2.log(message.toString(),IFC2.INFO);
-      var data = JSON.parse(message.toString());
-      var regex = /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]/;
+      let data = JSON.parse(message.toString());
+      let regex = /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]/;
       for (key in data.Addresses) {
-        var ip = data.Addresses[key];
+        let ip = data.Addresses[key];
         IFC2.log("Found IF on: " + ip,IFC2.INFO);
         if (ip.match(regex)) { // only match IPv4 addresses for now
           IFC2.infiniteFlight.serverAddress = ip;
@@ -855,7 +855,7 @@ let IFC2 = {
     // When udp server started and listening.
     server.on('listening', function () {
         // Get and print udp server listening ip address and port number in log console. 
-        var address = server.address(); 
+        let address = server.address(); 
         IFC2.log('UDP Server started and listening on ' + address.address + ":" + address.port,IFC2.INFO);
     });
 
