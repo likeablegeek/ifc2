@@ -8,8 +8,6 @@ This version of `ifc2` is limited to sending commands which request aircraft/fli
 
 ## Installing `ifc2`
 
-> The module is not yet published in npmjs.com -- so this is coming soon
-
 `ifc2` is available as a Node module on [npmjs.com](https://www.npmjs.com/) and can simply be installed with:
 
 ```
