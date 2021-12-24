@@ -331,10 +331,10 @@ Although this means `ifc2` will stop polling the state, the last retrieved value
 
 `ifc2` depends on the following `npm`/Node packages:
 
-* [`dgram` - core Node module](https://nodejs.org/api/dgram.html): For listening for UDP broadcast messages from Infinite Flight
-* [`net` - core Node module](https://nodejs.org/api/net.html): For establishing TCP socket connections with Infinite Flight to communicate with the Connect v2 API
-* [`events` - core Node module](https://nodejs.org/api/events.html): For emitting events to calling scripts
-* [`stringview` - `npm` module](https://www.npmjs.com/package/stringview): Extends Node data views to support string data types
+* [`dgram`](https://nodejs.org/api/dgram.html) - core Node module: For listening for UDP broadcast messages from Infinite Flight
+* [`net`](https://nodejs.org/api/net.html) - core Node module: For establishing TCP socket connections with Infinite Flight to communicate with the Connect v2 API
+* [`events`](https://nodejs.org/api/events.html) - core Node module: For emitting events to calling scripts
+* [`stringview`](https://www.npmjs.com/package/stringview) - `npm` module: Extends Node data views to support string data types
 
 ## Copyright and License
 
