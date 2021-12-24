@@ -25,7 +25,6 @@ limitations under the License.
 /*****
  * Import required modules
  */
-const isIp = require('is-ip'); // Used to test if broadcast IP addresses are IPv6 vs IPv4
 const dgram = require('dgram'); // For listening for UDP broadcasts
 const net = require('net'); // For establishing socket connections
 const events = require('events'); // For emitting events back to calling scripts

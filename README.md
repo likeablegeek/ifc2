@@ -327,6 +327,15 @@ IFC2.pollRegister("aircraft/0/heading_magnetic");
 
 Although this means `ifc2` will stop polling the state, the last retrieved value for the state will persist in the `ifData` data objects.
 
+## Dependencies
+
+`ifc2` depends on the following `npm`/Node packages:
+
+* [`dgram` - core Node module](https://nodejs.org/api/dgram.html): For listening for UDP broadcast messages from Infinite Flight
+* [`net` - core Node module](https://nodejs.org/api/net.html): For establishing TCP socket connections with Infinite Flight to communicate with the Connect v2 API
+* [`events` - core Node module](https://nodejs.org/api/events.html): For emitting events to calling scripts
+* [`stringview` - `npm` module](https://www.npmjs.com/package/stringview): Extends Node data views to support string data types
+
 ## Copyright and License
 
 This version is `ifc2` Copyright 2021, @likeablegeek. Distributed by [FlightSim Ninja](https://flightsim.ninja/).
