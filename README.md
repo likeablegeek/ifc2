@@ -2,10 +2,6 @@
 
 A Javascript client for the Infinite Flight simulator Connect API version 2
 
-## Limitations
-
-This version of `ifc2` can get/set aircraft/flight states as well as run Infinite Flight commands available through the Infinite Flight Connect v2 API.
-
 ## Installing `ifc2`
 
 `ifc2` is available as a Node module on [npmjs.com](https://www.npmjs.com/) and can simply be installed with:
