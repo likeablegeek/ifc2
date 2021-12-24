@@ -333,6 +333,6 @@ Although this means `ifc2` will stop polling the state, the last retrieved value
 
 ## Copyright and License
 
-This version is `ifc2` Copyright 2021, @likeablegeek.
+This version is `ifc2` Copyright 2021, @likeablegeek. Distributed by [FlightSim Ninja](https://flightsim.ninja/).
 
 You may not use this work/module/file except in compliance with the License. Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

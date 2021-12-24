@@ -3,7 +3,8 @@
 ifc2: A Node JS module providing a client the Infinite Flight Connect version 2 API.
 
 Version: 1.0.1
-Author: @likeablegeek
+Author: @likeablegeek (https://likeablegeek.com/)
+Distributed by: FlightSim Ninja (http://flightim.ninja)
 
 Copyright 2021.
 
@@ -28,6 +29,7 @@ const isIp = require('is-ip'); // Used to test if broadcast IP addresses are IPv
 const dgram = require('dgram'); // For listening for UDP broadcasts
 const net = require('net'); // For establishing socket connections
 const events = require('events'); // For emitting events back to calling scripts
+require('stringview'); // DataView extensions for reading/writing strings
 
 /****
  * Define IFC2 object
@@ -171,59 +173,65 @@ let IFC2 = {
    */
   setCommand: (cmd, val) => { // Prepare command ready to send to IF
 
-    IFC2.log('setCommand: ' + cmd + "," + val);
+    IFC2.log('setCommand: ' + cmd + "," + val, IFC2.MANDATORY);
 
     let cmdType = IFC2.infiniteFlight.manifestByCommand[cmd].type;
 
-    if (cmdType < 4) { // Ignore string data types for now -- coming soon
+    let dataLength = 1;
 
-      let dataLength = 1;
-
-      switch(cmdType) {
-        case IFC2.INTEGER:
-          dataLength = 4;
-          break;
-        case IFC2.FLOAT:
-          dataLength = 4;
-          break;
-        case IFC2.DOUBLE:
-          dataLength = 4;
-          break;
-      }
-    
-
-      let abCommand = new ArrayBuffer(5 + dataLength); // 5 is command + true/false divider + value to be sent
-      let dvCommand = new DataView(abCommand);
-      dvCommand.setInt32(0, cmd, IFC2.LE); // Encode the command itself
-      dvCommand.setInt8(4, IFC2.SETCMD, IFC2.LE); // Encode set marker
-
-      switch(cmdType) {
-        case IFC2.BOOLEAN:
-          dvCommand.setInt8(5, val, true);
-          break;
-        case IFC2.INTEGER:
-          dvCommand.setInt32(5, val, true);
-          break;
-        case IFC2.FLOAT:
-          dvCommand.setFloat32(5, val, true);
-          break;
-        case IFC2.DOUBLE:
-          dvCommand.setFloat64(5, val, true);
-          break;
-      }
-
-      let u8Command = new Uint8Array(abCommand);
-  
-      IFC2.log("getCommand: " + u8Command);
-    
-      return u8Command;
-  
-    } else {
-
-      return null;
-
+    switch(cmdType) {
+      case IFC2.INTEGER:
+        dataLength = 4;
+        break;
+      case IFC2.FLOAT:
+        dataLength = 4;
+        break;
+      case IFC2.DOUBLE:
+        dataLength = 4;
+        break;
+      case IFC2.STRING:
+        dataLength = 4 + val.length; // length is 4 for string length + string length
+        break;
+      case IFC2.LONG:
+        dataLength = 8;
+        break;
     }
 
+    let abCommand = new ArrayBuffer(5 + dataLength); // 5 is command + true/false divider + value to be sent
+    let dvCommand = new DataView(abCommand);
+    dvCommand.setInt32(0, cmd, IFC2.LE); // Encode the command itself
+    dvCommand.setInt8(4, IFC2.SETCMD, IFC2.LE); // Encode set marker
+
+    switch(cmdType) {
+      case IFC2.BOOLEAN:
+        dvCommand.setInt8(5, val, true);
+        break;
+      case IFC2.INTEGER:
+        dvCommand.setInt32(5, val, true);
+        break;
+      case IFC2.FLOAT:
+        dvCommand.setFloat32(5, val, true);
+        break;
+      case IFC2.DOUBLE:
+        dvCommand.setFloat64(5, val, true);
+        break;
+      case IFC2.STRING:
+        dvCommand.setInt32(5, val.length, true);
+        dvCommand.setString(9, val);
+        break;
+      case IFC2.LONG:
+        dvCommand.setBigInt64(5, val, true);
+        break;
+    }
+
+    let u8Command = new Uint8Array(abCommand);
+
+    IFC2.log("setCommand u8Command: " + u8Command, IFC2.MANDATORY);
+
+    IFC2.log(dvCommand, IFC2.MANDATORY);
+
+    return u8Command;
+  
   },
 
 
@@ -602,6 +610,8 @@ let IFC2 = {
 
             IFC2.log("processData: data length gt 8");
 
+            IFC2.log(data);
+
             IFC2.log("processData: waitList before splice: " + JSON.stringify(IFC2.waitList));
 
             IFC2.waitList.splice(waitIndex,1);
@@ -626,8 +636,7 @@ let IFC2 = {
                 IFC2.processResult(command, data.toString("utf8",12,strLen + 12));
                 break;
               case IFC2.LONG:
-                strLen = data.readUInt32LE(8);
-                IFC2.processResult(command, data.toString("utf8",12,strLen + 12));
+                IFC2.processResult(command, data.readBigInt64LE(8));
                 break;
             }
 
