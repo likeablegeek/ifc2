@@ -623,11 +623,11 @@ let IFC2 = {
                 break;
               case IFC2.STRING:
                 strLen = data.readUInt32LE(8);
-                IFC2.processResult(command, data.toString("utf8",8,strLen + 12));
+                IFC2.processResult(command, data.toString("utf8",12,strLen + 12));
                 break;
               case IFC2.LONG:
                 strLen = data.readUInt32LE(8);
-                IFC2.processResult(command, data.toString("utf8",8,strLen + 12));
+                IFC2.processResult(command, data.toString("utf8",12,strLen + 12));
                 break;
             }
 
