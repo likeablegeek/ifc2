@@ -106,6 +106,7 @@ let IFC2 = {
    */
   q: [], // Queue for processing one-off requests
   pollQ: [], // Queue for recurring poll requests
+  pollCurrent: 0, // Position in poll queue
 
   /*****
    * List to keep track of the commands pending responses from IF
@@ -525,14 +526,16 @@ let IFC2 = {
 
       IFC2.log(IFC2.pollQ);
 
-      let cmd = IFC2.pollQ.shift() // Grab the next item in the queue
-      IFC2.pollQ.push(cmd); // And push it back to the end of the queue for future use
-
+      // Get current command to process
+      let cmd = IFC2.pollQ[IFC2.pollCurrent];
       let cmdCode = IFC2.infiniteFlight.manifestByName[cmd].command; // Get the command code
 
       // We aren't waiting so process it
 
       IFC2.log('Polling command: ' + cmdCode);
+
+      // Prep for next poll
+      IFC2.pollCurrent = ((IFC2.pollCurrent + 1) == IFC2.pollQ.length) ? 0 : (IFC2.pollCurrent + 1);
 
       IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => { // Send the command
         IFC2.log("Poll command sent: " + cmdCode);
@@ -567,6 +570,8 @@ let IFC2 = {
 
     let index = IFC2.pollQ.indexOf(cmd);
     IFC2.pollQ.splice(index,1);
+
+    if (IFC2.pollCurrent >= IFC2.pollQ.length) { IFC2.pollCurrent = 0; }
 
   },
 
@@ -647,25 +652,29 @@ let IFC2 = {
 
           } else {
 
-            setTimeout(nextFN,250);
+//            setTimeout(nextFN,250);
+            nextFN();
 
           }
 
         } else {
 
-          setTimeout(nextFN,250);
+//          setTimeout(nextFN,250);
+          nextFN();
 
         }
 
       } else {
 
-        setTimeout(nextFN,250);
+//        setTimeout(nextFN,250);
+        nextFN();
 
       }
 
     } else {
 
-      setTimeout(nextFN,250);
+//      setTimeout(nextFN,250);
+      nextFN();
 
     }
 
