@@ -554,7 +554,9 @@ let IFC2 = {
    */
   pollRegister: (cmd) => {
 
-    IFC2.pollQ.push(cmd);
+    if (!IFC2.pollQ.hasOwnProperty(cmd)) {
+      IFC2.pollQ.push(cmd);
+    }
 
   },
 
