@@ -2,7 +2,7 @@
 
 ifc2: A Node JS module providing a client the Infinite Flight Connect version 2 API.
 
-Version: 1.0.4
+Version: 1.0.5
 Author: @likeablegeek (https://likeablegeek.com/)
 Distributed by: FlightSim Ninja (http://flightim.ninja)
 
@@ -409,8 +409,6 @@ let IFC2 = {
     IFC2.infiniteFlight.manifestBuffer = null;
     
     // Set up connection to the manifest socket
-    IFC2.infiniteFlight.manifestSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, () => {});
-
     IFC2.infiniteFlight.manifestSocket.on('data', (data) => { // Handle "data" event
 
       IFC2.log("Receiving Manifest Data");
@@ -482,12 +480,8 @@ let IFC2 = {
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", "msg": "Manifest socket connection to Infinite Flight closed"}); // Return data to calling script through an event
     });
 
-    IFC2.infiniteFlight.manifestSocket.on('connect', () => { // Handle "connect" event
-      IFC2.log('Manifest Connected');
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", "msg": "Manifest socket connection to Infinite Flight created"}); // Return data to calling script through an event
-      IFC2.infiniteFlight.manifestSocket.setTimeout(IFC2.infiniteFlight.manifestTimeout); // Set the socket timeout
-      IFC2.infiniteFlight.manifestSocket.write(IFC2.getCommand(IFC2.MANIFESTCMD), () => {}); // Issue the get manifest command (-1)
-    });
+//    IFC2.infiniteFlight.manifestSocket.on('connect', () => { // Handle "connect" event
+//    });
 
     IFC2.infiniteFlight.manifestSocket.on('error', function(data) {
       IFC2.log('Error: ' + data, IFC2.INFO);
@@ -506,6 +500,13 @@ let IFC2 = {
 
     IFC2.infiniteFlight.manifestSocket.on('lookup', function(data) {
       IFC2.log('Lookup: ' + data, IFC2.INFO);
+    });
+
+    IFC2.infiniteFlight.manifestSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, () => {
+      IFC2.log('Manifest Connected');
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", "msg": "Manifest socket connection to Infinite Flight created"}); // Return data to calling script through an event
+      IFC2.infiniteFlight.manifestSocket.setTimeout(IFC2.infiniteFlight.manifestTimeout); // Set the socket timeout
+      IFC2.infiniteFlight.manifestSocket.write(IFC2.getCommand(IFC2.MANIFESTCMD), () => {}); // Issue the get manifest command (-1)
     });
 
   },
@@ -608,13 +609,13 @@ let IFC2 = {
 
           IFC2.log("processData: data length gt 4");
 
-          let length = data.readUInt32LE(4); // We do, so read the length of the response data
+//          let length = data.readUInt32LE(4); // We do, so read the length of the response data
 
-          IFC2.log("processData: Response length: " + length);
+//          IFC2.log("processData: Response length: " + length);
 
           if (data.length > 8) { 
 
-            IFC2.log("processData: data length gt 8");
+            IFC2.log("processData: data length gt 5");
 
             IFC2.log(data);
 
@@ -626,7 +627,7 @@ let IFC2 = {
 
             switch(IFC2.infiniteFlight.manifestByCommand[command].type) {
               case IFC2.BOOLEAN:
-                IFC2.processResult(command, (data.readUInt32LE(8) == 1) ? true : false);
+                IFC2.processResult(command, (data.readUInt8(8) == 1) ? true : false);
                 break;
               case IFC2.INTEGER:
                 IFC2.processResult(command, data.readUInt32LE(8));
