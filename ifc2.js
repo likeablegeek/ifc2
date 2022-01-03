@@ -778,7 +778,6 @@ let IFC2 = {
       IFC2.log('Connected for polling to IF server ' + IFC2.infiniteFlight.serverAddress, IFC2.MANDATORY);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", "msg": "Polling socket connection to Infinite Flight created"}); // Return data to calling script through an event
       IFC2.isConnected = true;
-      IFC2.successCallback();
 
       // Fetch one-time data about aircraft, IF, etc
       IFC2.get('infiniteflight/app_state');
@@ -787,7 +786,12 @@ let IFC2 = {
       IFC2.get('aircraft/0/name');
       IFC2.get('aircraft/0/livery');
 
+      // Issue callback
+      IFC2.successCallback();
+
+      // Start Polling
       IFC2.processPoll();
+
     });
 
     IFC2.infiniteFlight.pollSocket.on('drain', function(data) {
