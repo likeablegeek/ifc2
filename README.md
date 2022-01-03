@@ -170,6 +170,18 @@ The output would look like this:
 }
 ```
 
+Additionally, immediately after connecting to an Infinite Flight device, `ifc2` will fetch the following states and add them to `ifData` so they will be available shortly after connection to provide context about the Infinite Flight device and aircraft being used:
+
+```
+infiniteflight/app_state
+infiniteflight/app_version
+infiniteflight/api_version
+aircraft/0/name
+aircraft/0/livery
+```
+
+Each of these requests will generate an `IFC2data` event when the API returns the relevant data to `ifc2` and the data will be available in `ifData`.
+
 ### Setting states in Infinite Flight
 
 Many of the state commands in a manifest can also be used to set a state such as changing the position of flaps.

@@ -2,7 +2,7 @@
 
 ifc2: A Node JS module providing a client the Infinite Flight Connect version 2 API.
 
-Version: 1.0.5
+Version: 1.0.6
 Author: @likeablegeek (https://likeablegeek.com/)
 Distributed by: FlightSim Ninja (http://flightim.ninja)
 
@@ -163,7 +163,7 @@ let IFC2 = {
     let u8Command = new Uint8Array(abCommand);
   
     IFC2.log("getCommand: " + u8Command);
-    
+
     return u8Command;
   
   },
@@ -779,6 +779,14 @@ let IFC2 = {
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", "msg": "Polling socket connection to Infinite Flight created"}); // Return data to calling script through an event
       IFC2.isConnected = true;
       IFC2.successCallback();
+
+      // Fetch one-time data about aircraft, IF, etc
+      IFC2.get('infiniteflight/app_state');
+      IFC2.get('infiniteflight/app_version');
+      IFC2.get('infiniteflight/api_version');
+      IFC2.get('aircraft/0/name');
+      IFC2.get('aircraft/0/livery');
+
       IFC2.processPoll();
     });
 
