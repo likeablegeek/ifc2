@@ -602,123 +602,131 @@ let IFC2 = {
 
     IFC2.log('processData: Processing data source: ' + source, IFC2.INFO);
 
-    let data = (source == "client") ? IFC2.qBuffer : IFC2.pollBuffer;
+    let length = (source == "client") ? IFC2.qBuffer.length : IFC2.pollBuffer.length;
 
-    let command = data.readInt32LE(0); // Get the command from the data
+    while (length > 0) {
 
-    IFC2.log("processData: Got data for command: " + command);
-    let inManifest = IFC2.infiniteFlight.manifestByCommand.hasOwnProperty(command); // See if command is in manifest
+      let data = (source == "client") ? IFC2.qBuffer : IFC2.pollBuffer;
 
-    IFC2.log("processData: inManifest: " + inManifest);
+      let command = data.readInt32LE(0); // Get the command from the data
 
-    if (inManifest) { // Only proceed if we have the command in the manifest
+      IFC2.log("processData: Got data for command: " + command);
+      let inManifest = IFC2.infiniteFlight.manifestByCommand.hasOwnProperty(command); // See if command is in manifest
 
-      let waitIndex = IFC2.waitList.indexOf(command); // See if the command is in the waitList
+      IFC2.log("processData: inManifest: " + inManifest);
 
-      IFC2.log("processData: waitList: " + JSON.stringify(IFC2.waitList));
-      IFC2.log("processData: In waitList: " + waitIndex);
-      
-      if (waitIndex >= 0) { // Only proceed if command is in the waitList
+      if (inManifest) { // Only proceed if we have the command in the manifest
 
-        IFC2.log("processData: Waiting for command: " + command);
+        let waitIndex = IFC2.waitList.indexOf(command); // See if the command is in the waitList
 
-        IFC2.log("processData: data length: " + data.length);
+        IFC2.log("processData: waitList: " + JSON.stringify(IFC2.waitList));
+        IFC2.log("processData: In waitList: " + waitIndex);
+  
+        if (waitIndex >= 0) { // Only proceed if command is in the waitList
 
-        if (data.length > 4) { // See if we have a data length greater than 4
+          IFC2.log("processData: Waiting for command: " + command);
 
-          IFC2.log("processData: data length gt 4");
+          IFC2.log("processData: data length: " + data.length);
 
-          let bufLength = data.readInt32LE(4);
+          if (data.length > 4) { // See if we have a data length greater than 4
 
-//          let length = data.readUInt32LE(4); // We do, so read the length of the response data
+            IFC2.log("processData: data length gt 4");
 
-//          IFC2.log("processData: Response length: " + length);
+            let bufLength = data.readInt32LE(4);
 
-          if (data.length >= bufLength + 8) {  // Do we have the full command data?
+  //          let length = data.readUInt32LE(4); // We do, so read the length of the response data
 
-            IFC2.log("processData: data is complete so process");
+  //          IFC2.log("processData: Response length: " + length);
 
-            IFC2.log(data);
+            if (data.length >= bufLength + 8) {  // Do we have the full command data?
 
-            IFC2.log("processData: waitList before splice: " + JSON.stringify(IFC2.waitList));
+              IFC2.log("processData: data is complete so process");
 
-            IFC2.waitList.splice(waitIndex,1);
+              IFC2.log(data);
 
-            IFC2.log("processData: waitList after  splice: " + JSON.stringify(IFC2.waitList));
+              IFC2.log("processData: waitList before splice: " + JSON.stringify(IFC2.waitList));
 
-            switch(IFC2.infiniteFlight.manifestByCommand[command].type) {
-              case IFC2.BOOLEAN:
-                IFC2.processResult(command, (data.readUInt8(8) == 1) ? true : false);
-                break;
-              case IFC2.INTEGER:
-                IFC2.processResult(command, data.readUInt32LE(8));
-                break;
-              case IFC2.FLOAT:
-                IFC2.processResult(command, data.readFloatLE(8));
-                break;
-              case IFC2.DOUBLE:
-                IFC2.processResult(command, data.readDoubleLE(8));
-                break;
-              case IFC2.STRING:
-                strLen = data.readUInt32LE(8);
-                IFC2.processResult(command, data.toString("utf8",12,strLen + 12));
-                break;
-              case IFC2.LONG:
-                IFC2.processResult(command, data.readBigInt64LE(8));
-                break;
-            }
+              IFC2.waitList.splice(waitIndex,1);
 
-            // remove data from buffer
+              IFC2.log("processData: waitList after  splice: " + JSON.stringify(IFC2.waitList));
 
-            if (source == "client") {
+              switch(IFC2.infiniteFlight.manifestByCommand[command].type) {
+                case IFC2.BOOLEAN:
+                  IFC2.processResult(command, (data.readUInt8(8) == 1) ? true : false);
+                  break;
+                case IFC2.INTEGER:
+                  IFC2.processResult(command, data.readUInt32LE(8));
+                  break;
+                case IFC2.FLOAT:
+                  IFC2.processResult(command, data.readFloatLE(8));
+                  break;
+                case IFC2.DOUBLE:
+                  IFC2.processResult(command, data.readDoubleLE(8));
+                  break;
+                case IFC2.STRING:
+                  strLen = data.readUInt32LE(8);
+                  IFC2.processResult(command, data.toString("utf8",12,strLen + 12));
+                  break;
+                case IFC2.LONG:
+                  IFC2.processResult(command, data.readBigInt64LE(8));
+                  break;
+              }
 
-              if (data.length > bufLength + 8) {
-                IFC2.qBuffer = IFC2.qBuffer.slice(bufLength + 8,IFC2.qBuffer.length);
+              // remove data from buffer
+
+              if (source == "client") {
+
+                if (data.length > bufLength + 8) {
+                  IFC2.qBuffer = IFC2.qBuffer.slice(bufLength + 8,IFC2.qBuffer.length);
+                  length = IFC2.qBuffer;
+                } else {
+                  IFC2.qBuffer = null;
+                  length = 0;
+                  IFC2.isWaiting = false; // No longer waiting
+                  nextFN();
+                }
+
               } else {
-                IFC2.qBuffer = null;
+
+                if (data.length > bufLength + 8) {
+                  IFC2.pollBuffer = IFC2.pollBuffer.slice(bufLength + 8,IFC2.pollBuffer.length);
+                  length = IFC2.pollBuffer;
+                } else {
+                  IFC2.pollBuffer = null;
+                  length = 0;
+                  IFC2.isWaiting = false; // No longer waiting
+                  nextFN();
+                }
+
               }
 
             } else {
 
-              if (data.length > bufLength + 8) {
-//                console.log("Slice:"); console.log(IFC2.pollBuffer.slice(0,bufLength + 8))
-                IFC2.pollBuffer = IFC2.pollBuffer.slice(bufLength + 8,IFC2.pollBuffer.length);
-//                console.log("Left:"); console.log(IFC2.pollBuffer);
-              } else {
-                IFC2.pollBuffer = null;
-              }
+  //            setTimeout(nextFN,250);
+              nextFN();
 
             }
 
-            IFC2.isWaiting = false; // No longer waiting
-
-            nextFN();
-
           } else {
 
-//            setTimeout(nextFN,250);
+  //          setTimeout(nextFN,250);
             nextFN();
 
           }
 
         } else {
 
-//          setTimeout(nextFN,250);
+  //        setTimeout(nextFN,250);
           nextFN();
 
         }
 
       } else {
 
-//        setTimeout(nextFN,250);
+  //      setTimeout(nextFN,250);
         nextFN();
 
       }
-
-    } else {
-
-//      setTimeout(nextFN,250);
-      nextFN();
 
     }
 
