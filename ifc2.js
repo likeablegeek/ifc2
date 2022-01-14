@@ -676,6 +676,9 @@ let IFC2 = {
                 IFC2.qBuffer = IFC2.qBuffer.slice(bufLength + 8,IFC2.qBuffer.length);
               } else {
                 IFC2.qBuffer = null;
+                if (IFC2.waitList.length == 0) {
+                  IFC2.isWaiting = false; // No longer waiting
+                }
               }
 
             } else {
@@ -686,11 +689,12 @@ let IFC2 = {
 //                console.log("Left:"); console.log(IFC2.pollBuffer);
               } else {
                 IFC2.pollBuffer = null;
+                if (IFC2.waitList.length == 0) {
+                  IFC2.isWaiting = false; // No longer waiting
+                }
               }
 
             }
-
-            IFC2.isWaiting = false; // No longer waiting
 
             nextFN();
 
