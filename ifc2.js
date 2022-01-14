@@ -100,6 +100,7 @@ let IFC2 = {
    */
   isConnected: false, // Are we connected to IF?
   isWaiting: false, // Are we waiting?
+  isPollWaiting: false, // Are we waiting for a poll result?
 
   /*****
    * Command queues
@@ -108,6 +109,15 @@ let IFC2 = {
   pollQ: [], // Queue for recurring poll requests
   pollCurrent: 0, // Position in poll queue
 
+  /*****
+   * 
+   * Queue buffers
+   * 
+   */
+
+  qBuffer: null,
+  pollBuffer: null,
+  
   /*****
    * List to keep track of the commands pending responses from IF
    */
@@ -521,6 +531,8 @@ let IFC2 = {
    */
   processPoll: () => {
 
+    isPollWaiting = false;
+
     IFC2.log("Processing poll Q");
 
     if (IFC2.pollQ.length > 0) { // Only process if the queue has entries
@@ -538,7 +550,11 @@ let IFC2 = {
       // Prep for next poll
       IFC2.pollCurrent = ((IFC2.pollCurrent + 1) == IFC2.pollQ.length) ? 0 : (IFC2.pollCurrent + 1);
 
-      IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => { // Send the command
+      // Set isPollWaiting
+      isPollWaiting = true;
+
+      // Send the command
+      IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
         IFC2.log("Poll command sent: " + cmdCode);
         if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are still waiting for this command
           IFC2.waitList.push(cmdCode); // Add the command to the wait list
@@ -560,6 +576,7 @@ let IFC2 = {
 
     if (!IFC2.pollQ.hasOwnProperty(cmd)) {
       IFC2.pollQ.push(cmd);
+      if (!isPollWaiting) { IFC2.processPoll(); }
     }
 
   },
@@ -581,11 +598,13 @@ let IFC2 = {
    * 
    * nextFN is a function to call after data processing is done
    */
-  processData: (data, nextFN) => {
+  processData: (source, nextFN) => {
 
-    IFC2.log('processData: Processing data: ' + data, IFC2.INFO);
+    IFC2.log('processData: Processing data source: ' + source, IFC2.INFO);
 
-    let command = data.readInt32LE(0); // Get the command frm the data
+    let data = (source == "client") ? IFC2.qBuffer : IFC2.pollBuffer;
+
+    let command = data.readInt32LE(0); // Get the command from the data
 
     IFC2.log("processData: Got data for command: " + command);
     let inManifest = IFC2.infiniteFlight.manifestByCommand.hasOwnProperty(command); // See if command is in manifest
@@ -609,13 +628,15 @@ let IFC2 = {
 
           IFC2.log("processData: data length gt 4");
 
+          let bufLength = data.readInt32LE(4);
+
 //          let length = data.readUInt32LE(4); // We do, so read the length of the response data
 
 //          IFC2.log("processData: Response length: " + length);
 
-          if (data.length > 8) { 
+          if (data.length >= bufLength + 8) {  // Do we have the full command data?
 
-            IFC2.log("processData: data length gt 5");
+            IFC2.log("processData: data is complete so process");
 
             IFC2.log(data);
 
@@ -645,6 +666,28 @@ let IFC2 = {
               case IFC2.LONG:
                 IFC2.processResult(command, data.readBigInt64LE(8));
                 break;
+            }
+
+            // remove data from buffer
+
+            if (source == "client") {
+
+              if (data.length > bufLength + 8) {
+                IFC2.qBuffer = IFC2.qBuffer.slice(bufLength + 8,IFC2.qBuffer.length);
+              } else {
+                IFC2.qBuffer = null;
+              }
+
+            } else {
+
+              if (data.length > bufLength + 8) {
+//                console.log("Slice:"); console.log(IFC2.pollBuffer.slice(0,bufLength + 8))
+                IFC2.pollBuffer = IFC2.pollBuffer.slice(bufLength + 8,IFC2.pollBuffer.length);
+//                console.log("Left:"); console.log(IFC2.pollBuffer);
+              } else {
+                IFC2.pollBuffer = null;
+              }
+
             }
 
             IFC2.isWaiting = false; // No longer waiting
@@ -692,7 +735,20 @@ let IFC2 = {
 
       IFC2.log('***** Received: ' + data, IFC2.INFO);
 
-      IFC2.processData(data, IFC2.processQueue);
+      if (IFC2.qBuffer == null) { // We haven't stored any buffer data yet
+
+        // Store the first batch of data in the buffer
+        IFC2.qBuffer = data;
+
+      } else { // We already have buffer data
+
+        // Concat the new buffer data into the main manifest buffer
+        let bufArr = [IFC2.qBuffer,data];
+        IFC2.qBuffer = Buffer.concat(bufArr);
+
+      }
+
+      IFC2.processData("client", IFC2.processQueue);
 
     });
 
@@ -755,7 +811,21 @@ let IFC2 = {
 
       IFC2.log('Received poll: ' + data, IFC2.INFO);
 
-      IFC2.processData(data, IFC2.processPoll);
+      if (IFC2.pollBuffer == null) { // We haven't stored any buffer data yet
+
+        // Store the first batch of data in the buffer
+        IFC2.pollBuffer = data;
+
+      } else { // We already have buffer data
+
+        // Concat the new buffer data into the main manifest buffer
+        let bufArr = [IFC2.pollBuffer,data];
+        IFC2.pollBuffer = Buffer.concat(bufArr);
+
+      }
+
+//      console.log(IFC2.pollBuffer);
+      IFC2.processData("poll", IFC2.processPoll);
 
     });
 
