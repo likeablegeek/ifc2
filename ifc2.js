@@ -531,7 +531,7 @@ let IFC2 = {
    */
   processPoll: () => {
 
-    isPollWaiting = false;
+    IFC2.isPollWaiting = false;
 
     IFC2.log("Processing poll Q");
 
@@ -551,7 +551,7 @@ let IFC2 = {
       IFC2.pollCurrent = ((IFC2.pollCurrent + 1) == IFC2.pollQ.length) ? 0 : (IFC2.pollCurrent + 1);
 
       // Set isPollWaiting
-      isPollWaiting = true;
+      IFC2.isPollWaiting = true;
 
       // Send the command
       IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
@@ -576,7 +576,7 @@ let IFC2 = {
 
     if (!IFC2.pollQ.hasOwnProperty(cmd)) {
       IFC2.pollQ.push(cmd);
-      if (!isPollWaiting) { IFC2.processPoll(); }
+      if (!IFC2.isPollWaiting) { IFC2.processPoll(); }
     }
 
   },
