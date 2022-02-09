@@ -880,11 +880,11 @@ let IFC2 = {
         IFC2.get('aircraft/0/name',IFC2.infoCallback);
         IFC2.get('aircraft/0/livery',IFC2.infoCallback);
       } else {
-        IFC2.get('infiniteflight/app_state',IFC2.infoCallback);
-        IFC2.get('infiniteflight/app_version',IFC2.infoCallback);
-        IFC2.get('infiniteflight/api_version',IFC2.infoCallback);
-        IFC2.get('aircraft/0/name',IFC2.infoCallback);
-        IFC2.get('aircraft/0/livery',IFC2.infoCallback);
+        IFC2.get('infiniteflight/app_state');
+        IFC2.get('infiniteflight/app_version');
+        IFC2.get('infiniteflight/api_version');
+        IFC2.get('aircraft/0/name');
+        IFC2.get('aircraft/0/livery');
       }
 
       // Issue callback
