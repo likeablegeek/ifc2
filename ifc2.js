@@ -137,6 +137,12 @@ let IFC2 = {
   infoCallback: () => {},
 
   /*****
+   * Default polling throttle (0ms)
+   */
+
+  pollThrottle: 0,
+
+  /*****
    * Object to hold last value fetched for all states that have been fetched from API
    */
   ifData: {},
@@ -567,12 +573,24 @@ let IFC2 = {
       IFC2.isPollWaiting = true;
 
       // Send the command
-      IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
-        IFC2.log("Poll command sent: " + cmdCode);
-        if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are still waiting for this command
-          IFC2.waitList.push(cmdCode); // Add the command to the wait list
-        }
-      });
+      if (IFC2.pollThrottle > 0) { // Wait before polling
+        setTimeout(() => {
+          IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
+            IFC2.log("Poll command sent: " + cmdCode);
+            if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are still waiting for this command
+              IFC2.waitList.push(cmdCode); // Add the command to the wait list
+            }
+          });
+        }, IFC2.pollThrottle);
+
+      } else { // Don't delay -- just get on and poll
+        IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
+          IFC2.log("Poll command sent: " + cmdCode);
+          if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are still waiting for this command
+            IFC2.waitList.push(cmdCode); // Add the command to the wait list
+          }
+        });
+      }
 
     } else { // There was nothing in the queue
 
@@ -949,6 +967,7 @@ let IFC2 = {
     if (params.logLevel) IFC2.logLevel = params.logLevel; // Set logging message level
     if (params.callback) IFC2.isCallback = params.callback; // Set if we are using callbacks
     if (params.infoCallback) IFC2.infoCallback = params.infoCallback; // Callback function for initial info fetches
+    if (params.pollThrottle) IFC2.pollThrottle = params.pollThrottle; // Set polling throttle if provided
     if (params.host && params.port) { // Host provided so connect directly to it
       IFC2.infiniteFlight.serverAddress = params.host;
       IFC2.infiniteFlight.serverPort = params.port;
