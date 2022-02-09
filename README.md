@@ -40,6 +40,8 @@ To initialise `ifc2` and connect to an Infinite Flight device you use the `init`
 
 * `successCallback` is the function to be executed after the connection has been established with Infinite Flight
 * `params` is an optional parameter which allows you to configure and control various aspects of the module, including:
+  * `callback` is a boolean value indicating if callback functions should be used to return values instead of the standard `ifc2` event model; default is `false`
+  * `infoCallback` is a function to use as callback when `ifc2` fetches certain default information during initialisation (such as livery); if this function is not provided when `callback` is true, it will default to an empty function that takes no action
   * `enableLog` is a boolean value to enable/disable logging in the Module; default is `false`
   * `loggingLevel` is an integer value for logging level in the module (2: INFO, 1: WARN, 0: ERROR); default is 0 (ERROR)
   * `host` is the IP address of a device running Infinite Flight to which you want to connect without polling for UDP broadcasts from Infinite Flight; if not set the module will wait for a UDP broadcast to determine which device to connect to
@@ -126,7 +128,7 @@ You can fetch states by using the `get` function and passing the command name fr
 IFC2.get("aircraft/0/bank");
 ```
 
-When fetching states, the `ifc2` module treats this as an asynchronous activity to avoid blocking while waiting for a response from Infinite Flight. When `ifc2` receives a response, it will emit an `IFC2data` event and return a data object containing two properties:
+When fetching states, the `ifc2` module treats this as an asynchronous activity to avoid blocking while waiting for a response from Infinite Flight. When `ifc2` receives a response, by default it will emit an `IFC2data` event and return a data object containing two properties:
 
 * `command`: The name of the command being returned
 * `data`: The value returned by Infinite Flight for the command
@@ -144,6 +146,8 @@ If we had sent the `aircraft/0/bank` command as in the example above, the result
 ```
 { command: 'aircraft/0/bank', data: 0.0004447073442861438 }
 ```
+
+> `ifc2` offers an alternative to events using callback functions which is discussed below
 
 Additionally, all state values fetched from Infinite Flight are stored in the `ifData` property of the `ifc2` object. At any time, this object will have one entry for each state ever fetched since `ifc2` was instantiated and will contain the last fetched value for that state along with a timestamp. The timestamp will be represented as a [UNIX-style time stamp](https://www.unixtimestamp.com/).
 
@@ -329,6 +333,8 @@ IFC2.pollRegister("aircraft/0/bank");
 
 As with the `get` function, each time a value is returned by Infinite Flight during the polling, an `IFC2data` event will be emitted. Also, the last retrieved value for each state will be stored and retained in the `ifData` data object for future reference.
 
+> `ifc2` offers an alternative to events using callback functions which is discussed below
+
 `ifc2` will continue to poll for the states in the polling list until either they are deregistered or `ifc2` disconnects from Infinite Flight`.
 
 You can register a command from the polling list with the `pollDeregister` function:
@@ -338,6 +344,64 @@ IFC2.pollRegister("aircraft/0/heading_magnetic");
 ```
 
 Although this means `ifc2` will stop polling the state, the last retrieved value for the state will persist in the `ifData` data objects.
+
+### Callbacks
+
+By default, `ifc2` returns state values to the calling script by emitting the `IFC2data` event. However, some use cases are better serverd by using callbacks. For this reason, `ifc2` offers an alternate callback mechanism.
+
+Using callbacks instead of events is an either-or proposition. When you choose to use callbacks, the `IFC2data` event will not be emitted by `ifc2`.
+
+> While the `IFC2data` event is not emitted, the `IFC2manifest` and `IFC2msg` events will still be emitted.
+
+To use callbacks to receive state data returned by Infinite Flight requires three steps:
+
+1. Set the `callback` parameter when initialising `ifc2`
+
+2. Provide an callback function to handle default state information fetched by `ifc2` during initialisation such as `aircraft/0/livery`
+
+3. Specify a callback function when invoking `get` or `pollRegister`
+
+#### Initialising `ifc2` to Use Callbacks
+
+To use callbacks make sure you set the `callback` parameter to `true` and provide an callback function with the `infoCallback` parameter:
+
+```
+IFC2.init(
+  function() {
+    console.log("IFC connected");
+    IFC2.get("aircraft/0/pitch");
+  },
+  {
+    "callback": true,
+    "infoCallback": (result) => { console.log(result); }
+    "enableLog": true,
+    "loggingLevel": 1,
+    "host": "192.168.2.123",
+    "port": 10112
+  }
+)
+```
+
+The callback function set in `infoCallback` will be invoked when Infinite Flight returns each of the following five values which `ifc2` requests during initialisation:
+
+```
+infiniteflight/app_state
+infiniteflight/app_version
+infiniteflight/api_version
+aircraft/0/name
+aircraft/0/livery
+```
+
+If you don't want to handle and take action with these values when they returned, leave out the `infoCallback` parameter since by default `ifc2` will use an empty function for this callback.
+
+#### Provide a Callback Function to `get` and `pollRegister`
+
+Both the `get` and `pollRegister` functions accept a callback function as a second parameter. When using callback functions instead of events, this is a required parameter as in these examples:
+
+```
+IFC2.get('aircraft/0/pitch', (result) => { console.log(result); });
+IFC2.polLRegister('aircraft/0/pitch', (result) => { console.log(result); });
+```
 
 ## Dependencies
 

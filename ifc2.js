@@ -100,14 +100,16 @@ let IFC2 = {
    */
   isConnected: false, // Are we connected to IF?
   isWaiting: false, // Are we waiting?
-  isPollWaiting: false, // Are we waiting for a poll result?
+  isPollWaiting: false, // Are we waiting for a poll result?,
+  isCallback: false, // Are we using callbacks?
 
   /*****
    * Command queues
    */
   q: [], // Queue for processing one-off requests
   pollQ: [], // Queue for recurring poll requests
-  pollCurrent: 0, // Position in poll queue
+  pollCurrent: 0, // Position in poll queue,
+  callbacks: {}, // Holds callback functions for when callbacks are enabled
 
   /*****
    * 
@@ -127,6 +129,12 @@ let IFC2 = {
    * Event emitter for return events to client
    */
   eventEmitter: new events.EventEmitter(),
+
+  /*****
+   * Default empty infoCallback function
+   */
+
+  infoCallback: () => {},
 
   /*****
    * Object to hold last value fetched for all states that have been fetched from API
@@ -314,11 +322,16 @@ let IFC2 = {
   /*****
    * Function for client to request a one-off get command
    */
-  get: (cmd) => {
+  get: (cmd, callback) => {
 
     IFC2.log("Processing get request: " + cmd);
 
     if (IFC2.isConnected) { // Only enqueue if connected
+
+      if (IFC2.isCallback) { // Save the callback function if we are using it
+        IFC2.callbacks[cmd] = callback;
+      }
+
       IFC2.enqueueCommand(cmd,IFC2.GETCMD);
     }
 
@@ -572,11 +585,17 @@ let IFC2 = {
   /*****
    * Register a command into the poll queue
    */
-  pollRegister: (cmd) => {
+  pollRegister: (cmd, callback) => {
 
     if (!IFC2.pollQ.hasOwnProperty(cmd)) {
+
+      if (IFC2.isCallback) { // Save callback function if we are using callbacks
+        IFC2.callbacks[cmd] = callback;
+      }
+
       IFC2.pollQ.push(cmd);
       if (!IFC2.isPollWaiting) { IFC2.processPoll(); }
+
     }
 
   },
@@ -854,11 +873,19 @@ let IFC2 = {
       IFC2.isConnected = true;
 
       // Fetch one-time data about aircraft, IF, etc
-      IFC2.get('infiniteflight/app_state');
-      IFC2.get('infiniteflight/app_version');
-      IFC2.get('infiniteflight/api_version');
-      IFC2.get('aircraft/0/name');
-      IFC2.get('aircraft/0/livery');
+      if (IFC2.isCallback) {
+        IFC2.get('infiniteflight/app_state',IFC2.infoCallback);
+        IFC2.get('infiniteflight/app_version',IFC2.infoCallback);
+        IFC2.get('infiniteflight/api_version',IFC2.infoCallback);
+        IFC2.get('aircraft/0/name',IFC2.infoCallback);
+        IFC2.get('aircraft/0/livery',IFC2.infoCallback);
+      } else {
+        IFC2.get('infiniteflight/app_state',IFC2.infoCallback);
+        IFC2.get('infiniteflight/app_version',IFC2.infoCallback);
+        IFC2.get('infiniteflight/api_version',IFC2.infoCallback);
+        IFC2.get('aircraft/0/name',IFC2.infoCallback);
+        IFC2.get('aircraft/0/livery',IFC2.infoCallback);
+      }
 
       // Issue callback
       IFC2.successCallback();
@@ -898,7 +925,15 @@ let IFC2 = {
     };
 
     // Return IFC2data event
-    IFC2.eventEmitter.emit('IFC2data',{"command": IFC2.infiniteFlight.manifestByCommand[command].name, "data": data}); // Return data to calling script through an event
+    if (IFC2.isCallback) { // Use a callback if one is available
+
+      IFC2.callbacks[IFC2.infiniteFlight.manifestByCommand[command].name]({"command": IFC2.infiniteFlight.manifestByCommand[command].name, "data": data})
+
+    } else { // Use an event
+
+      IFC2.eventEmitter.emit('IFC2data',{"command": IFC2.infiniteFlight.manifestByCommand[command].name, "data": data}); // Return data to calling script through an event
+
+    }
 
   },
 
@@ -907,11 +942,13 @@ let IFC2 = {
   /*****
    * Initialise module and connection to IF
    */
-  init: function(successCallback, params = {}) {
+  init: function(successCallback, params={}) {
     IFC2.log("Initialisting IFC2");
     if (successCallback) IFC2.successCallback = successCallback; // Set success callback function
     if (params.enableLog) IFC2.enableLog = params.enableLog; // Set Logging on/off
     if (params.logLevel) IFC2.logLevel = params.logLevel; // Set logging message level
+    if (params.callback) IFC2.isCallback = params.callback; // Set if we are using callbacks
+    if (params.infoCallback) IFC2.infoCallback = params.infoCallback; // Callback function for initial info fetches
     if (params.host && params.port) { // Host provided so connect directly to it
       IFC2.infiniteFlight.serverAddress = params.host;
       IFC2.infiniteFlight.serverPort = params.port;
