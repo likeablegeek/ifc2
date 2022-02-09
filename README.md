@@ -42,6 +42,7 @@ To initialise `ifc2` and connect to an Infinite Flight device you use the `init`
 * `params` is an optional parameter which allows you to configure and control various aspects of the module, including:
   * `callback` is a boolean value indicating if callback functions should be used to return values instead of the standard `ifc2` event model; default is `false`
   * `infoCallback` is a function to use as callback when `ifc2` fetches certain default information during initialisation (such as livery); if this function is not provided when `callback` is true, it will default to an empty function that takes no action
+  * `pollThrottle` is an integer value specifying how many milliseconds to wait between each polling request to Infinite Flight; default is `0`
   * `enableLog` is a boolean value to enable/disable logging in the Module; default is `false`
   * `loggingLevel` is an integer value for logging level in the module (2: INFO, 1: WARN, 0: ERROR); default is 0 (ERROR)
   * `host` is the IP address of a device running Infinite Flight to which you want to connect without polling for UDP broadcasts from Infinite Flight; if not set the module will wait for a UDP broadcast to determine which device to connect to
@@ -335,7 +336,7 @@ As with the `get` function, each time a value is returned by Infinite Flight dur
 
 > `ifc2` offers an alternative to events using callback functions which is discussed below
 
-`ifc2` will continue to poll for the states in the polling list until either they are deregistered or `ifc2` disconnects from Infinite Flight`.
+`ifc2` will continue to poll for the states in the polling queue until either they are deregistered or `ifc2` disconnects from Infinite Flight`.
 
 You can register a command from the polling list with the `pollDeregister` function:
 
@@ -344,6 +345,70 @@ IFC2.pollRegister("aircraft/0/heading_magnetic");
 ```
 
 Although this means `ifc2` will stop polling the state, the last retrieved value for the state will persist in the `ifData` data objects.
+
+#### Throttling
+
+By default, polling happens without delays. That means as soon as `ifc2` receives back a response from Infinite Flight from a poll request, it immeidately sends the next request in the polling queue. That means a very high rate of requests to Infinite Flight and a very high rate of results being returned.
+
+For some applications you may want to throttle the polling mechanism and insert a fixed delay between receiving a response and sending the next polling request. You do this by specifying the `pollThrottle` parameter when initialising `ifc2`.
+
+For instance, to wait 100 milliseconds before seconding the next request in the polling queue, you specify this when initialising:
+
+```
+IFC2.init(
+  function() {
+    console.log("IFC connected");
+    IFC2.get("aircraft/0/pitch");
+  },
+  {
+    "pollThrottle": 100,
+    "enableLog": true,
+    "loggingLevel": 1,
+    "host": "192.168.2.123",
+    "port": 10112
+  }
+)
+```
+
+Keep in mind that if you are polling multiple states, this can lead to a significant delay for getting updates to a specific state.
+
+For instance, consider registering five states for polling:
+
+```
+IFC2.pollRegister('aircraft/0/latitude');
+IFC2.pollRegister('aircraft/0/longitude');
+IFC2.pollRegister('aircraft/0/bank');
+IFC2.pollRegister('aircraft/0/pitch');
+IFC2.pollRegister('aircraft/0/altitude_msl');
+```
+
+This means that the polling works sequentially like this:
+
+* Fetch `aircraft/0/latitude`
+* Once a response is recceived, fetch `aircraft/0/longitude`
+* Once a response is recceived, fetch `aircraft/0/bank`
+* Once a response is recceived, fetch `aircraft/0/pitch`
+* Once a response is recceived, fetch `aircraft/0/altitude_msl`
+* Once a response is recceived, fetch `aircraft/0/latitude`
+* Once a response is recceived, fetch `aircraft/0/longitude`
+* Once a response is recceived, fetch `aircraft/0/bank`
+* Once a response is recceived, fetch `aircraft/0/pitch`
+* etc.
+
+If a `pollThrottle` value is set to `100` this means the following will happen:
+
+* Fetch `aircraft/0/latitude`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/longitude`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/bank`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/pitch`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/altitude_msl`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/latitude`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/longitude`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/bank`
+* Once a response is recceived, wait for 100 millisecnds and then fetch `aircraft/0/pitch`
+* etc.
+
+As a result, this means that there will be at least a 500 millisecond delay between requests for `aircraft/0/latitude`, at least a 500 millisecond delay between requests for `aircraft/0/longitude`, and the same for all the states in the polling queue.
 
 ### Callbacks
 
