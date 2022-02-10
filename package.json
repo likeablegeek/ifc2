@@ -1,6 +1,6 @@
 {
   "name": "ifc2",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "A Javascript client for Infinite Flight simulator API version 2",
   "main": "ifc2.js",
   "repository": {

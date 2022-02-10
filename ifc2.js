@@ -1092,13 +1092,4 @@ let IFC2 = {
 
 };
 
-Object.defineProperty(IFC2, "INFO", { enumerable: true, configurable: false , writable: false });
-Object.defineProperty(IFC2, "WARN", { enumerable: true, configurable: false , writable: false });
-Object.defineProperty(IFC2, "ERROR", { enumerable: true, configurable: false , writable: false });
-Object.defineProperty(IFC2, "MANDATORY", { enumerable: true, configurable: false , writable: false });
-Object.defineProperty(IFC2, "GETCMD", { enumerable: true, configurable: false , writable: false });
-Object.defineProperty(IFC2, "RUNCMD", { enumerable: true, configurable: false , writable: false });
-Object.defineProperty(IFC2, "SETCMD", { enumerable: true, configurable: false , writable: false });
-Object.defineProperty(IFC2, "LE", { enumerable: true, configurable: false , writable: false });
-
 module.exports = IFC2;
