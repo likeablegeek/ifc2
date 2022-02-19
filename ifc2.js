@@ -2,7 +2,7 @@
 
 ifc2: A Node JS module providing a client the Infinite Flight Connect version 2 API.
 
-Version: 1.0.17
+Version: 1.0.18
 Author: @likeablegeek (https://likeablegeek.com/)
 Distributed by: FlightSim Ninja (http://flightim.ninja)
 
@@ -498,17 +498,15 @@ let IFC2 = {
     IFC2.infiniteFlight.manifestSocket.on('timeout', () => { // Handle "timeout" evenet
 
       IFC2.log("Manifest data done/timed out");
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "timeout", "msg": "Manifest socket connection to Infinite Flight timed out -- processing the manifest"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "timeout", context: "manifest", "msg": "Manifest socket connection to Infinite Flight timed out"}); // Return data to calling script through an event
 
       IFC2.infiniteFlight.manifestSocket.destroy(); // Destroy the socket
-
-      IFC2.processManifest();
 
     })
 
     IFC2.infiniteFlight.manifestSocket.on('close', () => { // Handle "close" event
       IFC2.log('Manifest Connection closed');
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", "msg": "Manifest socket connection to Infinite Flight closed"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", context: "manifest", "msg": "Manifest socket connection to Infinite Flight closed"}); // Return data to calling script through an event
     }); 
 
 //    IFC2.infiniteFlight.manifestSocket.on('connect', () => { // Handle "connect" event
@@ -516,17 +514,17 @@ let IFC2 = {
 
     IFC2.infiniteFlight.manifestSocket.on('error', function(data) {
       IFC2.log('Error: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", "msg": "Error on Infinite Flight manifest socket"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", context: "manifest", "msg": "Error on Infinite Flight manifest socket"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.manifestSocket.on('drain', function(data) {
       IFC2.log('Drain: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", "msg": "Manifest socket connection to Infinite Flight drained"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", context: "manifest", "msg": "Manifest socket connection to Infinite Flight drained"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.manifestSocket.on('end', function(data) {
       IFC2.log('End: ' + data, IFC2.WARN);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", "msg": "Manifest socket connection to Infinite Flight ended"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", context: "manifest", "msg": "Manifest socket connection to Infinite Flight ended"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.manifestSocket.on('lookup', function(data) {
@@ -535,7 +533,7 @@ let IFC2 = {
 
     IFC2.infiniteFlight.manifestSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, () => {
       IFC2.log('Manifest Connected');
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", "msg": "Manifest socket connection to Infinite Flight created"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", context: "manifest", "msg": "Manifest socket connection to Infinite Flight created"}); // Return data to calling script through an event
       IFC2.infiniteFlight.manifestSocket.setTimeout(IFC2.infiniteFlight.manifestTimeout); // Set the socket timeout
       IFC2.infiniteFlight.manifestSocket.write(IFC2.getCommand(IFC2.MANIFESTCMD), () => {}); // Issue the get manifest command (-1)
     });
@@ -797,33 +795,33 @@ let IFC2 = {
 
     IFC2.infiniteFlight.clientSocket.on('error', function(data) {
       IFC2.log('Error: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", "msg": "Error on Infinite Flight socket"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", context: "client", "msg": "Error on Infinite Flight socket"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('timeout', function(data) {
       IFC2.log('Timeout: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "timeout", "msg": "Timeout on  socket connection to Infinite Flight"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "timeout", context: "client", "msg": "Timeout on  socket connection to Infinite Flight"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('close', function(data) {
       IFC2.log('Close: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", "msg": "Socket connection to Infinite Flight closed"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", context: "client", "msg": "Socket connection to Infinite Flight closed"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('connect', function(data) {
       IFC2.log('Connected to IF server ' + IFC2.infiniteFlight.serverAddress, IFC2.MANDATORY);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", "msg": "Socket connection to Infinite Flight created"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", context: "client", "msg": "Socket connection to Infinite Flight created"}); // Return data to calling script through an event
       IFC2.postConnect();
     });
 
     IFC2.infiniteFlight.clientSocket.on('drain', function(data) {
       IFC2.log('Drain: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", "msg": "Socket connection to Infinite Flight drained"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", context: "client", "msg": "Socket connection to Infinite Flight drained"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('end', function(data) {
       IFC2.log('End: ' + data, IFC2.WARN);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", "msg": "Socket connection to Infinite Flight ended"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", context: "client", "msg": "Socket connection to Infinite Flight ended"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('lookup', function(data) {
@@ -874,22 +872,22 @@ let IFC2 = {
 
     IFC2.infiniteFlight.pollSocket.on('error', function(data) {
       IFC2.log('Poll Error: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", "msg": "Error polling Infinite Flight"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", context: "poll", "msg": "Error polling Infinite Flight"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('timeout', function(data) {
       IFC2.log('Poll Timeout: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "timeout", "msg": "Timeout on polling socket connection to Infinite Flight"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "timeout", context: "poll", "msg": "Timeout on polling socket connection to Infinite Flight"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('close', function(data) {
       IFC2.log('Poll Close: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", "msg": "Polling socket connection to Infinite Flight closed"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", context: "poll", "msg": "Polling socket connection to Infinite Flight closed"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('connect', function(data) {
       IFC2.log('Connected for polling to IF server ' + IFC2.infiniteFlight.serverAddress, IFC2.MANDATORY);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", "msg": "Polling socket connection to Infinite Flight created"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", context: "poll", "msg": "Polling socket connection to Infinite Flight created"}); // Return data to calling script through an event
       IFC2.isConnected = true;
 
       // Fetch one-time data about aircraft, IF, etc
@@ -917,12 +915,12 @@ let IFC2 = {
 
     IFC2.infiniteFlight.pollSocket.on('drain', function(data) {
       IFC2.log('Poll Drain: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", "msg": "Polling socket connection to Infinite Flight drained"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", context: "poll", "msg": "Polling socket connection to Infinite Flight drained"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('end', function(data) {
       IFC2.log('Poll End: ' + data, IFC2.INFO);
-      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", "msg": "Polling socket connection to Infinite Flight ended"}); // Return data to calling script through an event
+      IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", context: "poll", "msg": "Polling socket connection to Infinite Flight ended"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('lookup', function(data) {
