@@ -2,7 +2,7 @@
 
 ifc2: A Node JS module providing a client the Infinite Flight Connect version 2 API.
 
-Version: 1.0.18
+Version: 1.0.19
 Author: @likeablegeek (https://likeablegeek.com/)
 Distributed by: FlightSim Ninja (http://flightim.ninja)
 
@@ -1026,7 +1026,7 @@ let IFC2 = {
   /*****
    * Close active connections
    */
-  close: function() {
+  close: function(callback) {
 
     // Only close if connected
     if (IFC2.isConnected) {
@@ -1090,7 +1090,7 @@ let IFC2 = {
     }
 
     // Execute callback function
-    // callback();
+    callback();
 
   }
 
