@@ -2,6 +2,27 @@
 
 A Javascript client for the Infinite Flight simulator Connect API version 2
 
+## Table of Contents
+
+- [Installing `ifc2`](#installing-ifc2)
+- [Using the API](#using-the-api)
+  - [Connecting to the Infinite Flight Connect v2 API](#connecting-to-the-infinite-flight-connect-v2-api)
+  - [Including `ifc2` in your scripts/applications](#including-ifc2-in-your-scriptsapplications)
+  - [Initialization](#initialization)
+- [Using the Infinite Flight Connect API through `ifc2`](#using-the-infinite-flight-connect-api-through-ifc2)
+  - [Using the Manifest](#using-the-manifest)
+  - [Getting states from Infinite Flight](#getting-states-from-infinite-flight)
+  - [Setting states in Infinite Flight](#setting-states-in-infinite-flight)
+  - [Running Commands in Infinite Flight](#running-commands-in-infinite-flight)
+  - [Events](#events)
+  - [Polling](#polling)
+  - [Callback](#callbacks)
+    - [Initialising `ifc2` to Use Callbacks](#initialising-ifc2-to-use-callbacks)
+    - [Provide a Callback Function to `get` and `pollRegister`](#provide-a-callback-function-to-get-and-pollregister)
+- [Dependencies](#dependencies)
+- [Copyright and Licence](#dependencies)
+
+
 ## Installing `ifc2`
 
 `ifc2` is available as a Node module on [npmjs.com](https://www.npmjs.com/) and can simply be installed with:
@@ -476,6 +497,14 @@ IFC2.polLRegister('aircraft/0/pitch', (result) => { console.log(result); });
 * [`net`](https://nodejs.org/api/net.html) - core Node module: For establishing TCP socket connections with Infinite Flight to communicate with the Connect v2 API
 * [`events`](https://nodejs.org/api/events.html) - core Node module: For emitting events to calling scripts
 * [`stringview`](https://www.npmjs.com/package/stringview) - `npm` module: Extends Node data views to support string data types
+
+## Applications using `ifc2`
+
+The following applications are using `ifc2` and have asked for a link from this README:
+
+- [PanelNinja](https://flightsim.ninja/#panelninja): A Windows and Mac OS tool for displaying instrument panels for Infinite Flight flights.
+
+> If you are using `ifc2` and would like to have your application listed here, submit a query through the [FlightSim Ninja support site](https://support.flightsim.ninja/) or contact the author (@likeablegeek) by a direct message in the [Infinite Flight Community](https://community.infiniteflight.com/).
 
 ## Copyright and License
 
