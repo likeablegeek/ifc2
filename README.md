@@ -21,6 +21,7 @@ A Javascript client for the Infinite Flight simulator Connect API version 2
     - [Provide a Callback Function to `get` and `pollRegister`](#provide-a-callback-function-to-get-and-pollregister)
 - [Dependencies](#dependencies)
 - [Copyright and Licence](#dependencies)
+- [Applications using `ifc2`](#applications-using-ifc2)
 
 
 ## Installing `ifc2`
