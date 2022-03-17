@@ -8,7 +8,7 @@ A Javascript client for the Infinite Flight simulator Connect API version 2
 - [Using the API](#using-the-api)
   - [Connecting to the Infinite Flight Connect v2 API](#connecting-to-the-infinite-flight-connect-v2-api)
   - [Including `ifc2` in your scripts/applications](#including-ifc2-in-your-scriptsapplications)
-  - [Initialization](#initialization)
+  - [Initialisation](#initialisation)
 - [Using the Infinite Flight Connect API through `ifc2`](#using-the-infinite-flight-connect-api-through-ifc2)
   - [Using the Manifest](#using-the-manifest)
   - [Getting states from Infinite Flight](#getting-states-from-infinite-flight)
@@ -36,7 +36,7 @@ npm install ifc2
 
 ### Connecting to the Infinite Flight Connect v2 API
 
-[Infinite Flight Connect v2](https://infiniteflight.com/guide/developer-reference/connect-api/version-2) is a built-in API that allows you to send command to Infinite Flight. You must enable it in Infinite Flight Settings > General > "Enable Infinite Flight Connect".
+[Infinite Flight Connect v2](https://infiniteflight.com/guide/developer-reference/connect-api/version-2) is a built-in API that allows you to send commands to Infinite Flight. You must enable it in Infinite Flight Settings > General > "Enable Infinite Flight Connect".
 
 > An older Connect v1 API still exists and is available in Infinite Flight -- however it is less efficient for many use cases that need to retrieve and/or set states in Infinite Flight at high speed. The [`ifc` JavaScript client](https://github.com/likeablegeek/ifc) offers an interface to the Connect v1 API.
 
@@ -54,7 +54,7 @@ Or, if you aren't installing with `npm` then you can simply clone this repositor
 let IFC2 = require("/path/to/ifc2.js);
 ```
 
-### Initialization
+### Initialisation
 
 To initialise `ifc2` and connect to an Infinite Flight device you use the `init` function. The `init` function takes the following arguments:
 
