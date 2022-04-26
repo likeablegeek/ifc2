@@ -28,6 +28,7 @@ limitations under the License.
 const dgram = require('dgram'); // For listening for UDP broadcasts
 const net = require('net'); // For establishing socket connections
 const events = require('events'); // For emitting events back to calling scripts
+const { SlowBuffer } = require('buffer');
 require('stringview'); // DataView extensions for reading/writing strings
 
 /****
@@ -40,7 +41,7 @@ let IFC2 = {
    */
   name: "IFC2", // Module name
 
-   /*****
+  /*****
    * Constants for referencing error levels in logging
    */
   INFO: 3,
@@ -109,7 +110,13 @@ let IFC2 = {
   q: [], // Queue for processing one-off requests
   pollQ: [], // Queue for recurring poll requests
   pollCurrent: 0, // Position in poll queue,
+  pollWaiting: 0, // Place holder for poll command currently pending data from IF
   callbacks: {}, // Holds callback functions for when callbacks are enabled
+
+  /*****
+   * Timeout placeholder for slow polling handler
+   */
+  pollTimeout: null,
 
   /*****
    * 
@@ -156,11 +163,9 @@ let IFC2 = {
         let info = "(";
         info += (IFC2.isConnected) ? 'c' : '';
         info += (IFC2.isWaiting) ? 'w' : '';
-//        info += (IFC2.isPolling) ? 'p' : '';
         info += IFC2.q.length;
         info += IFC2.pollQ.length;
         info += ")";
-        console.log (IFC2.name, info, msg);
       }
     }
   },
@@ -550,19 +555,15 @@ let IFC2 = {
    */
   processPoll: () => {
 
-    IFC2.isPollWaiting = false;
-
     IFC2.log("Processing poll Q");
 
-    if (IFC2.pollQ.length > 0) { // Only process if the queue has entries
+    if (IFC2.pollQ.length > 0 && !IFC2.isPollWaiting) { // Only process if the queue has entries and we are not waiting for data from IF
 
       IFC2.log(IFC2.pollQ);
 
       // Get current command to process
       let cmd = IFC2.pollQ[IFC2.pollCurrent];
       let cmdCode = IFC2.infiniteFlight.manifestByName[cmd].command; // Get the command code
-
-      // We aren't waiting so process it
 
       IFC2.log('Polling command: ' + cmdCode);
 
@@ -577,19 +578,30 @@ let IFC2 = {
         setTimeout(() => {
           IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
             IFC2.log("Poll command sent: " + cmdCode);
-            if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are still waiting for this command
+            if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are already waiting for this command
+
               IFC2.waitList.push(cmdCode); // Add the command to the wait list
+
+              IFC2.pollWaiting = cmdCode;
+
             }
           });
         }, IFC2.pollThrottle);
 
       } else { // Don't delay -- just get on and poll
-        IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
-          IFC2.log("Poll command sent: " + cmdCode);
-          if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are still waiting for this command
+
+        if (IFC2.waitList.indexOf(cmdCode) < 0) { // Check if we are already waiting for this command
+
+          IFC2.infiniteFlight.pollSocket.write(IFC2.getCommand(cmdCode), () => {
+
+            IFC2.log("Poll command sent: " + cmdCode);
+
             IFC2.waitList.push(cmdCode); // Add the command to the wait list
-          }
-        });
+
+            IFC2.pollWaiting = cmdCode;
+
+          });
+        }
       }
 
     } else { // There was nothing in the queue
@@ -627,6 +639,8 @@ let IFC2 = {
     IFC2.pollQ.splice(index,1);
 
     if (IFC2.pollCurrent >= IFC2.pollQ.length) { IFC2.pollCurrent = 0; }
+
+    if (IFC2.pollQ.length == 0) { IFC2.isPollWaiting = false; }
 
   },
 
@@ -666,10 +680,6 @@ let IFC2 = {
           IFC2.log("processData: data length gt 4");
 
           let bufLength = data.readInt32LE(4);
-
-//          let length = data.readUInt32LE(4); // We do, so read the length of the response data
-
-//          IFC2.log("processData: Response length: " + length);
 
           if (data.length >= bufLength + 8) {  // Do we have the full command data?
 
@@ -721,14 +731,10 @@ let IFC2 = {
             } else {
 
               if (data.length > bufLength + 8) {
-//                console.log("Slice:"); console.log(IFC2.pollBuffer.slice(0,bufLength + 8))
                 IFC2.pollBuffer = IFC2.pollBuffer.slice(bufLength + 8,IFC2.pollBuffer.length);
-//                console.log("Left:"); console.log(IFC2.pollBuffer);
               } else {
                 IFC2.pollBuffer = null;
-                if (IFC2.waitList.length == 0) {
-                  IFC2.isWaiting = false; // No longer waiting
-                }
+                  IFC2.isPollWaiting = false; // No longer waiting
               }
 
             }
@@ -737,28 +743,24 @@ let IFC2 = {
 
           } else {
 
-//            setTimeout(nextFN,250);
             nextFN();
 
           }
 
         } else {
 
-//          setTimeout(nextFN,250);
           nextFN();
 
         }
 
       } else {
 
-//        setTimeout(nextFN,250);
         nextFN();
 
       }
 
     } else {
 
-//      setTimeout(nextFN,250);
       nextFN();
 
     }
@@ -865,7 +867,9 @@ let IFC2 = {
 
       }
 
-//      console.log(IFC2.pollBuffer);
+      // Clear poll timeout
+      clearTimeout(IFC2.pollTimeout);
+
       IFC2.processData("poll", IFC2.processPoll);
 
     });
