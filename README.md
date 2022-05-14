@@ -67,6 +67,9 @@ To initialise `ifc2` and connect to an Infinite Flight device you use the `init`
   * `pollThrottle` is an integer value specifying how many milliseconds to wait between each polling request to Infinite Flight; default is `0`
   * `enableLog` is a boolean value to enable/disable logging in the Module; default is `false`
   * `loggingLevel` is an integer value for logging level in the module (2: INFO, 1: WARN, 0: ERROR); default is 0 (ERROR)
+  * `keepAlive` is a boolean value indicating if the socket connection should have TCP keep alive enabled; default is `false`
+  * `doReconnect` is a boolean value indicating if `ifc2` should attempt to reconnect the socket connection when the connection generates an error; default is `true`
+  * `timeout` is an integer value indicating if the socket connection should generate timeout events after a set number of milliseconds -- no timeouts occur if set to `0`; default is `0`
   * `host` is the IP address of a device running Infinite Flight to which you want to connect without polling for UDP broadcasts from Infinite Flight; if not set the module will wait for a UDP broadcast to determine which device to connect to
   * `port` is the port to use when manually connecting to a device running Infinite Flight without polling for UDP broadcasts from Infinite Flight; if not set the module will wait for a UDP broadcast to determine which device to connect to
 
@@ -509,6 +512,6 @@ The following applications are using `ifc2` and have asked for a link from this 
 
 ## Copyright and License
 
-This version is `ifc2` Copyright 2021, @likeablegeek. Distributed by [FlightSim Ninja](https://flightsim.ninja/).
+This version is `ifc2` Copyright 2022, @likeablegeek. Distributed by [FlightSim Ninja](https://flightsim.ninja/).
 
 You may not use this work/module/file except in compliance with the License. Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

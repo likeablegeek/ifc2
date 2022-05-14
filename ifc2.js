@@ -2,11 +2,11 @@
 
 ifc2: A Node JS module providing a client the Infinite Flight Connect version 2 API.
 
-Version: 1.0.19
+Version: 1.0.22
 Author: @likeablegeek (https://likeablegeek.com/)
 Distributed by: FlightSim Ninja (http://flightim.ninja)
 
-Copyright 2021.
+Copyright 2022.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -95,6 +95,13 @@ let IFC2 = {
    */
   enableLog: false, // Control logging -- default is false
   logLevel: this.MANDATORY, // Logging message level -- default is MANDATORY
+
+  /*****
+   * Default keepalive, reconnect and timeout
+   */
+  keepAlive: false, // By default we don't keep alive
+  doReconnect: true, // By default we reconnect when sockets error
+  timeout: 0, // By default we don't time out the sockets (except the manifest)
 
   /*****
    * State tracking: are we connected? are we waiting?
@@ -734,7 +741,7 @@ let IFC2 = {
                 IFC2.pollBuffer = IFC2.pollBuffer.slice(bufLength + 8,IFC2.pollBuffer.length);
               } else {
                 IFC2.pollBuffer = null;
-                  IFC2.isPollWaiting = false; // No longer waiting
+                IFC2.isPollWaiting = false; // No longer waiting
               }
 
             }
@@ -772,7 +779,10 @@ let IFC2 = {
    */
   postManifest: function() {
 
-    IFC2.infiniteFlight.clientSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {});
+    IFC2.infiniteFlight.clientSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {
+      IFC2.infiniteFlight.clientSocket.setTimeout(IFC2.timeout);
+      IFC2.infiniteFlight.clientSocket.setKeepAlive(IFC2.keepAlive);
+    });
 
     IFC2.infiniteFlight.clientSocket.on('data', function(data) {
 
@@ -796,38 +806,61 @@ let IFC2 = {
     });
 
     IFC2.infiniteFlight.clientSocket.on('error', function(data) {
-      IFC2.log('Error: ' + data, IFC2.INFO);
+      IFC2.log('Client: Error: ' + JSON.stringify(data), IFC2.INFO);
+
+      if (IFC2.isConnected && IFC2.doReconnect) {
+        IFC2.log("Client: Trying to reconnect");
+        IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "reconnect", context: "client", "msg": "Reconnecting for general queries"}); // Return data to calling script through an event
+        IFC2.infiniteFlight.clientSocket.destroy();
+//          IFC2.infiniteFlight.pollSocket = new net.Socket();
+        IFC2.infiniteFlight.clientSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {
+          IFC2.infiniteFlight.clientSocket.setTimeout(IFC2.timeout);
+          IFC2.infiniteFlight.clientSocket.setKeepAlive(IFC2.keepAlive);
+          IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "reconnected", context: "client", "msg": "Reconnected for general queries"}); // Return data to calling script through an event
+        });
+      }
+
       IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", context: "client", "msg": "Error on Infinite Flight socket"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('timeout', function(data) {
-      IFC2.log('Timeout: ' + data, IFC2.INFO);
+      IFC2.log('Client: Timeout: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "timeout", context: "client", "msg": "Timeout on  socket connection to Infinite Flight"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('close', function(data) {
-      IFC2.log('Close: ' + data, IFC2.INFO);
+      IFC2.log('Client: Closer: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", context: "client", "msg": "Socket connection to Infinite Flight closed"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('connect', function(data) {
       IFC2.log('Connected to IF server ' + IFC2.infiniteFlight.serverAddress, IFC2.MANDATORY);
+
+/*      if (IFC2.isConnected && IFC2.infiniteFlight.keepAlive) {
+        IFC2.infiniteFlight.clientSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {
+          IFC2.infiniteFlight.clientSocket.setTimeout(IFC2.timeout);
+          IFC2.infiniteFlight.clientSocket.setKeepAlive(IFC2.keepAlive);
+        });
+      }*/
+
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "connect", context: "client", "msg": "Socket connection to Infinite Flight created"}); // Return data to calling script through an event
-      IFC2.postConnect();
+      if (!IFC2.isConnected) {
+        IFC2.postConnect();
+      }
     });
 
     IFC2.infiniteFlight.clientSocket.on('drain', function(data) {
-      IFC2.log('Drain: ' + data, IFC2.INFO);
+      IFC2.log('Client: Drain: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", context: "client", "msg": "Socket connection to Infinite Flight drained"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('end', function(data) {
-      IFC2.log('End: ' + data, IFC2.WARN);
+      IFC2.log('Client: End: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", context: "client", "msg": "Socket connection to Infinite Flight ended"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.clientSocket.on('lookup', function(data) {
-      IFC2.log('Lookup: ' + data, IFC2.INFO);
+      IFC2.log('Client: Lookup: ' + JSON.stringify(data), IFC2.INFO);
     });
 
   },
@@ -848,7 +881,10 @@ let IFC2 = {
     IFC2.log("clientSocket Connected ...", IFC2.MANDATORY);
 
     // Connect to Polling Socket
-    IFC2.infiniteFlight.pollSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {});
+    IFC2.infiniteFlight.pollSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {
+      IFC2.infiniteFlight.pollSocket.setTimeout(IFC2.timeout);
+      IFC2.infiniteFlight.pollSocket.setKeepAlive(IFC2.keepAlive);
+    });
 
     IFC2.infiniteFlight.pollSocket.on('data', function(data) {
 
@@ -875,17 +911,33 @@ let IFC2 = {
     });
 
     IFC2.infiniteFlight.pollSocket.on('error', function(data) {
-      IFC2.log('Poll Error: ' + data, IFC2.INFO);
+      IFC2.log('Poll: Error: ' + JSON.stringify(data), IFC2.INFO);
+
+      if (IFC2.isConnected && IFC2.doReconnect) {
+        IFC2.log("Poll: Trying to reconnect");
+        IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "reconnect", context: "poll", "msg": "Reconnecting for polling"}); // Return data to calling script through an event
+        IFC2.infiniteFlight.pollSocket.destroy();
+//          IFC2.infiniteFlight.pollSocket = new net.Socket();
+        IFC2.infiniteFlight.pollSocket.connect(IFC2.infiniteFlight.serverPort, IFC2.infiniteFlight.serverAddress, function() {
+          IFC2.infiniteFlight.pollSocket.setTimeout(IFC2.timeout);
+          IFC2.infiniteFlight.pollSocket.setKeepAlive(IFC2.keepAlive);
+          IFC2.isPollWaiting = false;
+          IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "reconnected", context: "poll", "msg": "Reconnected for polling"}); // Return data to calling script through an event
+          IFC2.processPoll();
+        });
+      }
+
       IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "error", context: "poll", "msg": "Error polling Infinite Flight"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('timeout', function(data) {
-      IFC2.log('Poll Timeout: ' + data, IFC2.INFO);
+      IFC2.log('Poll: Timeout: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "error", code: "timeout", context: "poll", "msg": "Timeout on polling socket connection to Infinite Flight"}); // Return data to calling script through an event
+      IFC2.processPoll();
     });
 
     IFC2.infiniteFlight.pollSocket.on('close', function(data) {
-      IFC2.log('Poll Close: ' + data, IFC2.INFO);
+      IFC2.log('Poll: Close: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "close", context: "poll", "msg": "Polling socket connection to Infinite Flight closed"}); // Return data to calling script through an event
     });
 
@@ -918,17 +970,17 @@ let IFC2 = {
     });
 
     IFC2.infiniteFlight.pollSocket.on('drain', function(data) {
-      IFC2.log('Poll Drain: ' + data, IFC2.INFO);
+      IFC2.log('Poll: Drain: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "drain", context: "poll", "msg": "Polling socket connection to Infinite Flight drained"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('end', function(data) {
-      IFC2.log('Poll End: ' + data, IFC2.INFO);
+      IFC2.log('Poll: End: ' + JSON.stringify(data), IFC2.INFO);
       IFC2.eventEmitter.emit('IFC2msg',{"type": "info", code: "end", context: "poll", "msg": "Polling socket connection to Infinite Flight ended"}); // Return data to calling script through an event
     });
 
     IFC2.infiniteFlight.pollSocket.on('lookup', function(data) {
-      IFC2.log('Poll Lookup: ' + data, IFC2.INFO);
+      IFC2.log('Poll: Lookup: ' + JSON.stringify(data), IFC2.INFO);
     });
 
   },
@@ -969,6 +1021,9 @@ let IFC2 = {
     if (successCallback) IFC2.successCallback = successCallback; // Set success callback function
     if (params.enableLog) IFC2.enableLog = params.enableLog; // Set Logging on/off
     if (params.logLevel) IFC2.logLevel = params.logLevel; // Set logging message level
+    if (params.keepAlive) IFC2.keepAlive = params.keepAlive; // Set keepalive
+    if (params.doReconnect) IFC2.doReconnect = params.doReconnect; // Set reconnect
+    if (params.timeout) IFC2.timeout = params.timeout; // Set socket timeout
     if (params.callback) IFC2.isCallback = params.callback; // Set if we are using callbacks
     if (params.infoCallback) IFC2.infoCallback = params.infoCallback; // Callback function for initial info fetches
     if (params.pollThrottle) IFC2.pollThrottle = params.pollThrottle; // Set polling throttle if provided
