@@ -25,5 +25,8 @@
   "bugs": {
     "url": "https://github.com/likeablegeek/ifc2/issues"
   },
-  "homepage": "https://github.com/likeablegeek/ifc2"
+  "homepage": "https://github.com/likeablegeek/ifc2",
+  "devDependencies": {
+    "@types/node": "^18.7.21"
+  }
 }
