@@ -32,7 +32,7 @@ export function pollRegister<T extends IFData>(
     callback: (data: T) => void
 ): void;
 export function pollDeregister(cmd: string): void;
-export function init(successCallback: () => void, params: InitInfo): void;
+export function init(successCallback?: () => void, params?: InitInfo): void;
 export function close(callback: () => void): void;
 
 export enum LogLevel {
