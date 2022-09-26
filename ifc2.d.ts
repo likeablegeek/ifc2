@@ -16,6 +16,11 @@ export const isWaiting: boolean;
 export const isPollWaiting: boolean;
 export const isCallback: boolean;
 
+export const INFO = 3;
+export const WARN = 2;
+export const ERROR = 1;
+export const MANDATORY = 0;
+
 export function on(event: string, listener: (...args: unknown[]) => void): void;
 export function getCommand(cmd: string): Uint8Array;
 export function setCommand<T extends IFData>(cmd: string, value: T): Uint8Array;
@@ -35,20 +40,6 @@ export function pollDeregister(cmd: string): void;
 export function init(successCallback?: () => void, params?: InitInfo): void;
 export function close(callback: () => void): void;
 
-export enum LogLevel {
-    INFO = 3,
-    WARN = 2,
-    ERROR = 1,
-    MANDATORY = 0,
-}
-
-export enum Action {
-    GET = 0,
-    SET = 1,
-    RUN = -1,
-    MANIFEST = -1,
-}
-
 export enum DataType {
     BOOLEAN = 0,
     INTEGER = 1,
@@ -56,21 +47,6 @@ export enum DataType {
     DOUBLE = 3,
     STRING = 4,
     LONG = 5,
-}
-
-export interface InfiniteFlight {
-    broadcastPort: 15000;
-    serverPort: 10112;
-    serverAddress: string;
-    clientSocket: Socket;
-    manifestSocket: Socket;
-    pollSocket: Socket;
-    manifestTimeout: number;
-    manifestData: string;
-    manifestByName: { [key: number]: ManifestNameItem };
-    manifestByCommand: { [key: string]: ManifestCommandItem };
-    manifestLength: number;
-    manifestBuffer: Buffer | null;
 }
 
 export interface ManifestCommandItem {
@@ -85,7 +61,7 @@ export interface ManifestNameItem {
 
 export interface InitInfo {
     enableLog?: boolean;
-    logLevel?: LogLevel;
+    logLevel?: number;
     keepAlive?: boolean;
     doReconnect?: boolean;
     timeout?: number;
