@@ -26,7 +26,7 @@ export function getCommand(cmd: string): Uint8Array;
 export function setCommand<T extends IFData>(cmd: string, value: T): Uint8Array;
 export function get<T extends IFData>(
     cmd: string,
-    callback: (data: T) => void
+    callback?: (data: T) => void
 ): void;
 export function set<T extends IFData>(cmd: string, value: T): void;
 export function run(cmd: string): void;
